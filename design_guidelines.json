@@ -1,0 +1,108 @@
+{
+  "theme": "dark",
+  "archetype": "ARCHETYPE 4: SWISS & HIGH-CONTRAST mixed with LUXURY",
+  "typography": {
+    "headings": "Outfit",
+    "body": "IBM Plex Sans",
+    "instruction": "Add Google Fonts link in public/index.html. Use 'Outfit' for all headings (H1-H4) with tracking-tight. Use 'IBM Plex Sans' for body text for a sterile, objective, corporate aesthetic.",
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+  },
+  "colors": {
+    "background": "#0A0A0C",
+    "foreground": "#FAFAFA",
+    "primary": "#0055FF",
+    "secondary": "#111111",
+    "accent": "#10B981",
+    "card": "#121215",
+    "border": "#222222",
+    "muted": "#888888"
+  },
+  "visual_enhancers": {
+    "textures": "Use subtle noise overlay on dark backgrounds to kill digital flatness and enhance the luxury/enterprise feel.",
+    "glassmorphism": "For Sticky Nav and Overlays: backdrop-blur-xl bg-black/60 with border-b border-white/10. NEVER use pure transparent backgrounds where content scrolls underneath.",
+    "shadows": "Minimal to none. Rely on 1px borders (border-white/10) to create separation rather than heavy drop shadows."
+  },
+  "layouts": {
+    "hero": "Faded background image with network visualization (use bg-black/60 overlay to maintain readability). Left-aligned text, massive typography (text-5xl md:text-6xl).",
+    "services": "Bento Grid Layout. Asymmetrical grid (grid-cols-1 md:grid-cols-12). Overlapping cards with 1px borders, solid background, and internal padding (p-8).",
+    "industries": "High Density Grid. Images should fade to grayscale initially and transition to full color on hover to maintain a unified dark corporate theme.",
+    "spacing": "Generous spacing philosophy. Use py-24 or py-32 for section separation to provide breathing room."
+  },
+  "motion": {
+    "scrolling": "Smooth scroll using @studio-freight/lenis to provide a premium feel.",
+    "framer_motion": "Subtle fade up and stagger children in grids. Avoid excessive bouncing."
+  },
+  "components": {
+    "navigation": "Sticky top, glassmorphism surface, z-50. Navigation links MUST be visible on desktop (no desktop hamburger).",
+    "buttons": "Sharp edges (rounded-none or rounded-sm). Primary button solid blue. Secondary button transparent with 1px border and hover transition.",
+    "contact_form": "Use Shadcn components for form elements. Inputs should have subtle backgrounds (bg-white/5) and distinct focus states (focus:ring-1 focus:ring-white). Toast via Sonner on success."
+  },
+  "image_urls": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1644088379091-d574269d422f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwxfHxkYXRhJTIwbmV0d29yayUyMHZpc3VhbGl6YXRpb258ZW58MHx8fHwxNzg2ODIwOTk3fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Blue network lines and dots for a tech/data visualization vibe",
+      "category": "Hero Background"
+    },
+    "about_us": {
+      "url": "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwzfHxkaXZlcnNlJTIwY29ycG9yYXRlJTIwdGVhbSUyMG1lZXRpbmd8ZW58MHx8fHwxNzg2ODIwOTk3fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Diverse corporate team meeting for authoritative consulting look",
+      "category": "About Us"
+    },
+    "industry_financial": {
+      "url": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHwxfHxmaW5hbmNpYWwlMjBhbmFseXRpY3MlMjBzdG9jayUyMG1hcmtldHxlbnwwfHx8fDE3ODY4MjA5OTd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Bitcoin/stock market chart on screen",
+      "category": "Industries - Financial"
+    },
+    "industry_automotive": {
+      "url": "https://images.unsplash.com/photo-1581091212991-8891c7d4bd9b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBjYXIlMjBhc3NlbWJseSUyMGxpbmV8ZW58MHx8fHwxNzg2ODIwOTk3fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Engineers working in automotive factory",
+      "category": "Industries - Automotive"
+    },
+    "industry_energy": {
+      "url": "https://images.unsplash.com/photo-1466611653911-95081537e5b7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHwyfHx3aW5kJTIwdHVyYmluZXMlMjBzdW5zZXR8ZW58MHx8fHwxNzg2ODIwOTk3fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Wind turbines under sunset",
+      "category": "Industries - Energy"
+    },
+    "industry_health": {
+      "url": "https://images.unsplash.com/photo-1758691461530-b215ed4ede6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwzfHxkb2N0b3IlMjB0YWJsZXQlMjBob3NwaXRhbHxlbnwwfHx8fDE3ODY4MjA5OTd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Elderly doctor in white coat at desk",
+      "category": "Industries - Health"
+    }
+  },
+  "packages_to_install": [
+    "@phosphor-icons/react",
+    "@studio-freight/lenis",
+    "framer-motion",
+    "sonner"
+  ],
+  "accessibility": {
+    "contrast": "Ensure all text over images has sufficient contrast. Use minimum 4.5:1 for normal text.",
+    "motion": "Respect prefers-reduced-motion for framer-motion animations.",
+    "testing": "All interactive and key informational elements MUST include a 'data-testid' attribute in kebab-case."
+  },
+  "instructions_to_main_agent": [
+    "Install required packages: yarn add @phosphor-icons/react @studio-freight/lenis framer-motion sonner",
+    "Create the app in .js/.jsx (NOT .tsx) as per the project requirements.",
+    "Update tailwind.config.js to include 'Outfit' and 'IBM Plex Sans' font families.",
+    "Implement a SmoothScroll context/wrapper using Lenis for the entire app.",
+    "For the Services Section, use @phosphor-icons/react (e.g., Database, Robot, Graph) with Duotone weight for a high-end feel.",
+    "In the Hero section, apply an overlay (e.g., bg-black/60) to the background image so the text 'Your trust is our responsibility' is perfectly readable.",
+    "DO NOT use generic centered alignments everywhere. Use explicit left alignment for text to match the authoritative consulting layout (like Thoughtworks).",
+    "For the contact form, use Shadcn primitives and implement Sonner for form submission feedback.",
+    "Ensure the sticky header has a backdrop blur and background opacity. It must NOT be fully transparent."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic outputs. Break the mold. Make it creative and premium.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition. Eg: transition: all. Always add transitions for specific interactive elements.",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations.",
+    "NEVER use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Use sonner for toasts from /app/frontend/src/components/ui/sonner.js."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "summary": "First-finish smoke testing of hiqanalytix marketing site. Backend (health, POST/GET /api/contact, 422 validation) and frontend (Hero, Services, Industries, nav scroll, contact form validation + successful E2E submission, mobile menu) all pass. Record submitted via UI verified retrievable via GET /api/contact in descending order.",
+  "tested_scope": ["backend", "frontend", "integration"],
+  "passed": [
+    "GET /api/health → 200 {status: healthy}",
+    "POST /api/contact valid payload → 201 with id + created_at",
+    "POST /api/contact invalid payload → 422 with detailed field errors (name<2, invalid email, phone too short, company<2, message<10)",
+    "GET /api/contact → 200 list ordered desc by created_at",
+    "Hero: brand 'hiqanalytix', slogan 'Your trust is our responsibility.', primary+secondary CTAs visible",
+    "Services section: 3 cards (Power Platform, Power BI, Automations)",
+    "Industries section: 5 cards (Financial, Automotive, Engineering, Energy, Health)",
+    "Navbar link Contact smooth-scrolls to contact form",
+    "Empty form submit → 5 inline field errors + error toast",
+    "Invalid email format → inline email error",
+    "Valid submission → success toast, form cleared, record persisted and retrievable via GET",
+    "Mobile menu toggle opens and closes nav-mobile-panel at 390px viewport"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}
