@@ -42,7 +42,7 @@ export default function Hero() {
 
                     <p
                         data-testid="hero-subheading"
-                        className="mt-8 max-w-2xl text-lg leading-relaxed text-neutral-600 md:text-xl"
+                        className="mt-8 max-w-2xl text-lg leading-relaxed text-neutral-800 md:text-xl"
                     >
                         hiqanalytix is a technology services partner delivering
                         Microsoft Power Platform, Power BI dashboards and intelligent
@@ -85,7 +85,7 @@ export default function Hero() {
                                 <div className="font-display text-3xl font-bold text-neutral-900 md:text-4xl">
                                     {m.k}
                                 </div>
-                                <div className="mt-1 text-xs uppercase tracking-widest text-neutral-500">
+                                <div className="mt-1 text-xs uppercase tracking-widest text-neutral-700">
                                     {m.v}
                                 </div>
                             </div>

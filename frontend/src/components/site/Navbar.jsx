@@ -4,6 +4,8 @@ const links = [
     { href: "#about", label: "About" },
     { href: "#services", label: "Services" },
     { href: "#stack", label: "Stack" },
+    { href: "#case-studies", label: "Case Studies" },
+    { href: "#roi", label: "ROI" },
     { href: "#industries", label: "Industries" },
     { href: "#contact", label: "Contact" },
 ];
@@ -43,7 +45,7 @@ export default function Navbar() {
                         <a
                             key={l.href}
                             href={l.href}
-                            data-testid={`nav-link-${l.label.toLowerCase()}`}
+                            data-testid={`nav-link-${l.label.toLowerCase().replace(/\s+/g, "-")}`}
                             className="text-sm text-neutral-600 transition-colors duration-200 hover:text-neutral-900"
                         >
                             {l.label}
@@ -86,7 +88,7 @@ export default function Navbar() {
                                 key={l.href}
                                 href={l.href}
                                 onClick={() => setOpen(false)}
-                                data-testid={`nav-mobile-link-${l.label.toLowerCase()}`}
+                                data-testid={`nav-mobile-link-${l.label.toLowerCase().replace(/\s+/g, "-")}`}
                                 className="border-b border-neutral-100 py-4 text-base text-neutral-800 hover:text-neutral-900"
                             >
                                 {l.label}

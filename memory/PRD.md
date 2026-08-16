@@ -24,17 +24,17 @@ Build a premium enterprise-grade corporate website for **hiqanalytix**, a techno
 7. Footer with company info, nav, services, industries.
 8. Fully responsive; dark premium enterprise aesthetic; smooth scrolling.
 
-## What's been implemented — 2026-01
-- Full React marketing site (Navbar, Hero, About, Services, **TechStack marquee**, Industries, Contact, Footer).
-- **Light theme: white background + orange (#F97316) accent system** (was dark).
-- New **horizontal auto-scrolling tech-stack marquee** with 16 Microsoft/Azure tools (Power BI, Power Apps, Power Automate, Power Virtual Agents, Copilot Studio, Dataverse, SharePoint, Microsoft Fabric, Azure, Azure Data Factory, Azure Synapse, SQL Server, Teams, Excel, OneDrive, Outlook) — pauses on hover — plus a manually horizontally-scrollable chip row for accessibility.
-- Smooth-scroll wrapper via Lenis + Framer Motion viewport reveals.
-- FastAPI backend with `/api/health`, `POST /api/contact` (Pydantic validation), `GET /api/contact` (sorted desc).
-- MongoDB persistence with ISO datetime serialization.
-- Sonner toast success/error feedback wired into form submission.
-- Complete Spring Boot deliverable in `/app/deliverables/spring-boot/`.
-- **Master `SETUP_GUIDE.md`** expanded to cover: (A) local install & run for total beginners, (B) end-to-end **live deployment**: GitHub → Render (Java backend, free) → Vercel (React frontend, free) → **GoDaddy DNS configuration** with exact A/CNAME records, HTTPS via Vercel automatic certs, and CORS updates.
-- Testing agent iteration 2: 100% backend, 100% frontend regression pass.
+## What's been implemented — 2026-01 (iteration 3)
+- Full React marketing site: Navbar, Hero, About, Services, **TechStack marquee**, **Case Studies**, **ROI Calculator (interactive, with pie charts backed by DB)**, Industries, Contact, Footer.
+- **Light theme: white background + orange (#F97316) accent system**.
+- **Text contrast pass**: all form labels, subtitles and bullets moved from grey (neutral-500/600) to near-black (neutral-800/900). Placeholders bumped from neutral-400 → neutral-500.
+- **Industries images fixed**: removed washed-out white overlay, now full-color images with only a bottom half-height dark gradient so title + description remain readable.
+- **Case Studies section**: 5 industry-specific case cards (Financial, Automotive, Engineering, Energy, Health) with 3 hard metrics each and a Microsoft-stack tag row.
+- **ROI Calculator section**: 7-input lead-capture form (name, email, company, industry, current_manpower, current_hours_per_week, current_tools) → POST `/api/roi-estimate` → persists to DB → renders **three donut pie charts** (cost 35%, manpower 55%, time 35%) with computed projected people & hours + a "Book a discovery call" CTA. Uses Recharts.
+- **New backend endpoints**: `POST /api/roi-estimate` (validated), `GET /api/roi-estimate` (list). Persists to `roi_leads` Mongo collection (preview) / `roi_leads` H2/PostgreSQL table (deliverable).
+- **Spring Boot deliverable extended**: RoiEntity/Repository/Request/Controller added; `application.properties` now uses **file-based H2 locally + PostgreSQL via env vars in production** (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DRIVER`, `DB_DIALECT`); pom.xml includes PostgreSQL driver + Spring Actuator.
+- **SETUP_GUIDE.md fully rewritten**: 13 parts (A-M) — understanding the layout, installing tools, running DB locally (H2 file mode), running Java backend, running React frontend, pushing to GitHub, provisioning Render free PostgreSQL, deploying Spring Boot to Render with env vars, deploying React to Vercel, connecting the GoDaddy domain with exact A/CNAME records, browsing leads in the live DB (Render shell / API / DBeaver), and troubleshooting table.
+- Testing agent iteration 3: **100% backend, 100% frontend** (7 pytest cases + full Playwright E2E on both new sections and existing regressions).
 
 ## Backlog / Next tasks
 ### P0 (production readiness)

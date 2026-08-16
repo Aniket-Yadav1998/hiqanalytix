@@ -53,7 +53,7 @@ export default function Industries() {
                             One playbook.
                         </h2>
                     </div>
-                    <p className="max-w-2xl text-lg leading-relaxed text-neutral-600 lg:col-span-6 lg:pt-4">
+                    <p className="max-w-2xl text-lg leading-relaxed text-neutral-800 lg:col-span-6 lg:pt-4">
                         Our reference architectures and delivery methodology are tuned to
                         the operating realities of each of these sectors — so you skip the
                         discovery tax.
@@ -70,29 +70,28 @@ export default function Industries() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, margin: "-60px" }}
                             transition={{ duration: 0.5, delay: i * 0.06 }}
-                            className={`group relative block overflow-hidden border border-neutral-200 bg-white ${
+                            className={`group relative block overflow-hidden border border-neutral-200 bg-white shadow-sm transition-shadow duration-300 hover:shadow-xl ${
                                 i < 2 ? "md:col-span-3" : "md:col-span-2"
                             }`}
                         >
-                            <div className="relative aspect-[4/5] w-full overflow-hidden">
+                            <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100">
                                 <img
                                     src={ind.img}
                                     alt={`${ind.title} industry`}
                                     loading="lazy"
-                                    className="h-full w-full scale-105 object-cover grayscale transition-[filter,transform] duration-700 group-hover:scale-100 group-hover:grayscale-0"
+                                    className="h-full w-full scale-105 object-cover transition-transform duration-700 group-hover:scale-100"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent" />
+                                {/* Bottom gradient only — image stays fully visible */}
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
+                                <span className="absolute right-4 top-4 border border-white/40 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-widest text-white backdrop-blur-sm">
+                                    0{i + 1}
+                                </span>
                             </div>
                             <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="font-display text-2xl font-bold text-neutral-900 md:text-3xl">
-                                        {ind.title}
-                                    </h3>
-                                    <span className="text-xs uppercase tracking-widest text-orange-600">
-                                        0{i + 1}
-                                    </span>
-                                </div>
-                                <p className="mt-3 max-w-md text-sm leading-relaxed text-neutral-700">
+                                <h3 className="font-display text-2xl font-bold text-white drop-shadow-lg md:text-3xl">
+                                    {ind.title}
+                                </h3>
+                                <p className="mt-3 max-w-md text-sm leading-relaxed text-white/95 drop-shadow">
                                     {ind.desc}
                                 </p>
                             </div>

@@ -1,0 +1,24 @@
+{
+  "summary": "Tested new ROI backend endpoints, Case Studies + ROI Calculator sections, dark contrast fixes, and Industries overlay fix. All 7 pytest cases passed (health, ROI valid create with computed fields, 3x invalid payloads returning 422, list ROI leads, contact regression). Frontend Playwright verified: nav-link-case-studies + nav-link-roi present; all 5 case cards render; all 7 ROI inputs render; empty submit shows 6 inline validation errors + error toast; valid submit renders roi-result with 3 pie charts showing 35%/55%/35% and heading 'Projected impact for AcmeCo'; projected values 4.5 people and 260 hrs/wk match backend. Contact 'FULL NAME' label computed color rgb(23,23,23) confirming near-black text-neutral-900. Industries images load fully (naturalWidth > 1600) with bottom-only gradient overlay.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "ROI Calculator result cards", "issues": ["Recharts prints repeated console warnings 'width(-1) height(-1)' on initial render because ResponsiveContainer's parent .h-32.w-32 briefly reports 0 before layout. Cosmetic only — charts render correctly. Consider giving ResponsiveContainer explicit width/height or adding minWidth={0}."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_roi_api.py", "/app/test_reports/pytest/roi_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "RoiCalculator.jsx (~340 lines) is nearing the size threshold; consider extracting RoiResult + StatCard into their own files for maintainability.",
+    "Recharts ResponsiveContainer inside a fixed 128x128 wrapper triggers width/height(-1) warnings; not breaking but noisy in console.",
+    "Contact.jsx uses text-neutral-500 placeholder color for regular inputs but text-neutral-400 for textarea placeholder — minor inconsistency in placeholder styling."
+  ],
+  "updated_files": ["/app/backend/tests/test_roi_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Created TEST_-prefixed ROI leads and one TEST_ contact via pytest run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend has /api/roi-estimate POST (201, computes money=35/manpower=55/time=35 pcts) and GET list. Frontend ROI form testids: roi-input-{name,email,company,industry,manpower,hours,tools}, roi-submit-btn, roi-result, roi-chart-{cost,manpower,time}. Case Studies testids: case-studies-section, case-card-{financial,automotive,engineering,energy,health}."
+}

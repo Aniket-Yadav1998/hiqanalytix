@@ -53,7 +53,7 @@ export default function About() {
                     <h2 data-testid="about-heading" className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
                         A senior team of data engineers, dashboard designers and automation specialists.
                     </h2>
-                    <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-600">
+                    <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-800">
                         We are a boutique technology services firm helping enterprise
                         clients rebuild the way they measure, decide and operate. From
                         finance close automation to plant-floor telemetry, our teams

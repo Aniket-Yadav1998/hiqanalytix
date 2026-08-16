@@ -4,6 +4,8 @@ const nav = [
     { label: "About", href: "#about" },
     { label: "Services", href: "#services" },
     { label: "Stack", href: "#stack" },
+    { label: "Case Studies", href: "#case-studies" },
+    { label: "ROI Calculator", href: "#roi" },
     { label: "Industries", href: "#industries" },
     { label: "Contact", href: "#contact" },
 ];
@@ -45,7 +47,7 @@ export default function Footer() {
                                 <li key={l.href}>
                                     <a
                                         href={l.href}
-                                        data-testid={`footer-link-${l.label.toLowerCase()}`}
+                                        data-testid={`footer-link-${l.label.toLowerCase().replace(/\s+/g, "-")}`}
                                         className="text-sm text-neutral-700 hover:text-orange-600"
                                     >
                                         {l.label}

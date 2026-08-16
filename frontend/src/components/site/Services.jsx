@@ -51,7 +51,7 @@ export default function Services() {
                             One outcome.
                         </h2>
                     </div>
-                    <p className="max-w-2xl text-lg leading-relaxed text-neutral-600 lg:col-span-7 lg:pt-4">
+                    <p className="max-w-2xl text-lg leading-relaxed text-neutral-800 lg:col-span-7 lg:pt-4">
                         We specialise on the Microsoft data & automation stack because
                         depth beats breadth. Every engagement is delivered by senior
                         practitioners — no learning on your invoice.
@@ -85,16 +85,16 @@ export default function Services() {
                                     <h3 className="mt-8 font-display text-2xl font-bold text-neutral-900 md:text-3xl">
                                         {s.title}
                                     </h3>
-                                    <p className="mt-2 text-sm uppercase tracking-[0.15em] text-neutral-500">
+                                    <p className="mt-2 text-sm uppercase tracking-[0.15em] text-neutral-700">
                                         {s.tagline}
                                     </p>
-                                    <p className="mt-6 max-w-xl text-base leading-relaxed text-neutral-600">
+                                    <p className="mt-6 max-w-xl text-base leading-relaxed text-neutral-800">
                                         {s.body}
                                     </p>
                                 </div>
                                 <ul className="mt-10 space-y-2 border-t border-neutral-200 pt-6">
                                     {s.bullets.map((b) => (
-                                        <li key={b} className="flex items-center gap-3 text-sm text-neutral-700">
+                                        <li key={b} className="flex items-center gap-3 text-sm text-neutral-800">
                                             <span className="h-1 w-1 rounded-full bg-orange-500" />
                                             {b}
                                         </li>

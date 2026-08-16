@@ -57,7 +57,7 @@ export default function Contact() {
 
     const field = (label, name, type = "text", placeholder = "", extra = {}) => (
         <label className="block">
-            <span className="mb-2 block text-xs uppercase tracking-[0.18em] text-neutral-500">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-neutral-900">
                 {label}
             </span>
             {name === "message" ? (
@@ -84,7 +84,7 @@ export default function Contact() {
                     placeholder={placeholder}
                     autoComplete="off"
                     data-testid={`contact-input-${name}`}
-                    className={`w-full border bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 ${
+                    className={`w-full border bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:ring-1 ${
                         errors[name]
                             ? "border-red-400 focus:ring-red-300"
                             : "border-neutral-300 focus:border-orange-500 focus:ring-orange-300"
@@ -124,7 +124,7 @@ export default function Contact() {
                             <br />
                             what you&apos;re building.
                         </h2>
-                        <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-600">
+                        <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-800">
                             Send us a short brief and a senior consultant will get back to
                             you within one business day. No forms-for-forms-sake.
                         </p>
@@ -173,7 +173,7 @@ export default function Contact() {
                             {field("Message", "message", "text", "Briefly describe your project, timeline and goals…")}
                         </div>
                         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 pt-6">
-                            <p className="text-xs text-neutral-500">
+                            <p className="text-xs text-neutral-700">
                                 By submitting, you agree to be contacted about your enquiry.
                             </p>
                             <button

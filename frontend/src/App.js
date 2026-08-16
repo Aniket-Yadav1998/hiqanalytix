@@ -7,6 +7,8 @@ import Hero from "@/components/site/Hero";
 import About from "@/components/site/About";
 import Services from "@/components/site/Services";
 import TechStack from "@/components/site/TechStack";
+import CaseStudies from "@/components/site/CaseStudies";
+import RoiCalculator from "@/components/site/RoiCalculator";
 import Industries from "@/components/site/Industries";
 import Contact from "@/components/site/Contact";
 import Footer from "@/components/site/Footer";
@@ -22,6 +24,8 @@ function App() {
                 <About />
                 <Services />
                 <TechStack />
+                <CaseStudies />
+                <RoiCalculator />
                 <Industries />
                 <Contact />
             </main>
