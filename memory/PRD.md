@@ -25,14 +25,16 @@ Build a premium enterprise-grade corporate website for **hiqanalytix**, a techno
 8. Fully responsive; dark premium enterprise aesthetic; smooth scrolling.
 
 ## What's been implemented — 2026-01
-- Full React marketing site (Navbar, Hero, About, Services, Industries, Contact, Footer).
+- Full React marketing site (Navbar, Hero, About, Services, **TechStack marquee**, Industries, Contact, Footer).
+- **Light theme: white background + orange (#F97316) accent system** (was dark).
+- New **horizontal auto-scrolling tech-stack marquee** with 16 Microsoft/Azure tools (Power BI, Power Apps, Power Automate, Power Virtual Agents, Copilot Studio, Dataverse, SharePoint, Microsoft Fabric, Azure, Azure Data Factory, Azure Synapse, SQL Server, Teams, Excel, OneDrive, Outlook) — pauses on hover — plus a manually horizontally-scrollable chip row for accessibility.
 - Smooth-scroll wrapper via Lenis + Framer Motion viewport reveals.
 - FastAPI backend with `/api/health`, `POST /api/contact` (Pydantic validation), `GET /api/contact` (sorted desc).
 - MongoDB persistence with ISO datetime serialization.
 - Sonner toast success/error feedback wired into form submission.
-- Complete Spring Boot deliverable (pom.xml, application.properties, ContactController/Entity/Repository/Request/Service, CorsConfig) in `/app/deliverables/spring-boot/`.
-- Master `SETUP_GUIDE.md` at `/app/SETUP_GUIDE.md` explaining install → run for a total beginner.
-- Testing agent: 100% pass on backend and frontend.
+- Complete Spring Boot deliverable in `/app/deliverables/spring-boot/`.
+- **Master `SETUP_GUIDE.md`** expanded to cover: (A) local install & run for total beginners, (B) end-to-end **live deployment**: GitHub → Render (Java backend, free) → Vercel (React frontend, free) → **GoDaddy DNS configuration** with exact A/CNAME records, HTTPS via Vercel automatic certs, and CORS updates.
+- Testing agent iteration 2: 100% backend, 100% frontend regression pass.
 
 ## Backlog / Next tasks
 ### P0 (production readiness)

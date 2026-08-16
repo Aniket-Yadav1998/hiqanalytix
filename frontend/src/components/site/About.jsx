@@ -16,7 +16,7 @@ export default function About() {
         <section
             id="about"
             data-testid="about-section"
-            className="relative border-t border-white/5 bg-[#0A0A0C] py-24 md:py-32"
+            className="relative border-t border-neutral-100 bg-white py-24 md:py-32"
         >
             <div className="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-12 lg:gap-20 lg:px-10">
                 <motion.div
@@ -30,16 +30,12 @@ export default function About() {
                         <img
                             src={aboutImg}
                             alt="hiqanalytix consulting team collaborating"
-                            className="w-full border border-white/10 object-cover"
+                            className="w-full border border-neutral-200 object-cover"
                             loading="lazy"
                         />
-                        <div className="absolute -bottom-6 -right-6 hidden border border-white/10 bg-[#0A0A0C] p-5 md:block">
-                            <div className="font-display text-3xl font-bold text-white">
-                                ISO&nbsp;27001
-                            </div>
-                            <div className="mt-1 text-xs uppercase tracking-widest text-white/50">
-                                Aligned processes
-                            </div>
+                        <div className="absolute -bottom-6 -right-6 hidden border border-neutral-200 bg-white p-5 shadow-[0_10px_40px_-10px_rgba(249,115,22,0.25)] md:block">
+                            <div className="font-display text-3xl font-bold text-neutral-900">ISO&nbsp;27001</div>
+                            <div className="mt-1 text-xs uppercase tracking-widest text-neutral-500">Aligned processes</div>
                         </div>
                     </div>
                 </motion.div>
@@ -51,19 +47,13 @@ export default function About() {
                     transition={{ duration: 0.7, delay: 0.1 }}
                     className="lg:col-span-7"
                 >
-                    <span
-                        data-testid="about-eyebrow"
-                        className="text-xs uppercase tracking-[0.25em] text-[#0055FF]"
-                    >
+                    <span data-testid="about-eyebrow" className="text-xs uppercase tracking-[0.25em] text-orange-600">
                         About hiqanalytix
                     </span>
-                    <h2
-                        data-testid="about-heading"
-                        className="mt-4 font-display text-4xl font-extrabold leading-tight text-white md:text-5xl lg:text-6xl"
-                    >
+                    <h2 data-testid="about-heading" className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
                         A senior team of data engineers, dashboard designers and automation specialists.
                     </h2>
-                    <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/70">
+                    <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-600">
                         We are a boutique technology services firm helping enterprise
                         clients rebuild the way they measure, decide and operate. From
                         finance close automation to plant-floor telemetry, our teams
@@ -71,17 +61,10 @@ export default function About() {
                         the same day.
                     </p>
 
-                    <ul
-                        data-testid="about-bullets"
-                        className="mt-10 grid gap-4 sm:grid-cols-2"
-                    >
+                    <ul data-testid="about-bullets" className="mt-10 grid gap-4 sm:grid-cols-2">
                         {bullets.map((b) => (
-                            <li key={b} className="flex items-start gap-3 text-white/80">
-                                <CheckCircle
-                                    weight="duotone"
-                                    size={22}
-                                    className="mt-0.5 flex-none text-[#10B981]"
-                                />
+                            <li key={b} className="flex items-start gap-3 text-neutral-800">
+                                <CheckCircle weight="duotone" size={22} className="mt-0.5 flex-none text-orange-500" />
                                 <span className="text-sm leading-relaxed">{b}</span>
                             </li>
                         ))}

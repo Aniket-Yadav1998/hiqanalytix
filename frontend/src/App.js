@@ -6,6 +6,7 @@ import Navbar from "@/components/site/Navbar";
 import Hero from "@/components/site/Hero";
 import About from "@/components/site/About";
 import Services from "@/components/site/Services";
+import TechStack from "@/components/site/TechStack";
 import Industries from "@/components/site/Industries";
 import Contact from "@/components/site/Contact";
 import Footer from "@/components/site/Footer";
@@ -20,18 +21,19 @@ function App() {
                 <Hero />
                 <About />
                 <Services />
+                <TechStack />
                 <Industries />
                 <Contact />
             </main>
             <Footer />
             <Toaster
                 position="bottom-right"
-                theme="dark"
+                theme="light"
                 toastOptions={{
                     style: {
-                        background: "#121215",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        color: "#fff",
+                        background: "#FFFFFF",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        color: "#0B0B0F",
                         borderRadius: 0,
                     },
                 }}
