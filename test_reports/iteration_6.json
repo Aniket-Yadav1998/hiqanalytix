@@ -1,0 +1,23 @@
+{
+  "summary": "Regression testing after adding spring.jackson.property-naming-strategy=SNAKE_CASE to Spring Boot deliverable. Static check on application.properties confirmed. FastAPI preview regression: all 20 pytest tests pass; ROI API returns snake_case keys with expected values (35/55/35, 4.5, 260.0); insights returns 6+ posts with snake_case (image_url, read_minutes, published_at); contact CRUD works. Frontend ROI calculator submits successfully and renders '35%/55%/35%', 'Projected impact for Acme Corp', baseline '10 people · 400 hrs / week · Excel, SAP' — no 'undefined' anywhere.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_roi_api.py",
+    "/app/backend/tests/test_contact_api.py",
+    "/app/backend/tests/test_insights_and_new_features.py",
+    "/app/test_reports/pytest/iteration_6.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Spring Boot fix is a single-line, low-risk config change — cannot be executed in this sandbox (no Maven/JDK runtime here), but the file was verified statically and the equivalent contract on FastAPI is confirmed correct end-to-end.",
+    "Recommendation for main agent: also add a compile-time DTO test in the Spring Boot project (e.g. using MockMvc + jsonPath('$.money_savings_pct')) so this regression is caught automatically in CI."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (20/20 pytest)", "frontend": "100% (ROI submit flow)"},
+  "seed_data_creation": "None new; insights seed remains from prior iterations",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Spring Boot deliverable cannot be built/run in this sandbox — only static verification of application.properties is possible. FastAPI preview at REACT_APP_BACKEND_URL is the running contract and matches the frontend snake_case expectations. ROI endpoint requires body fields current_manpower, current_hours_per_week, current_tools (not manpower/hours_per_week/tools).",
+  "rca of the issue": "Spring Boot's default Jackson property-naming strategy is LOWER_CAMEL_CASE, producing keys like moneySavingsPct while the React client (RoiCalculator.jsx) and the FastAPI preview both use snake_case (money_savings_pct). Setting spring.jackson.property-naming-strategy=SNAKE_CASE in application.properties makes Jackson serialize ALL controller responses in snake_case globally, aligning the Spring Boot deliverable with the frontend contract. Verified on FastAPI: response contains money_savings_pct=35, manpower_reduction_pct=55, time_reduction_pct=35, projected_manpower=4.5, projected_hours_per_week=260.0."
+}
