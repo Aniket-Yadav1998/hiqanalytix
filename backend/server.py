@@ -115,6 +115,7 @@ class InsightPost(BaseModel):
     excerpt: str
     category: str
     read_minutes: int = Field(default=6, ge=1, le=60)
+    image_url: str = ""
     published_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -123,6 +124,7 @@ class InsightCreate(BaseModel):
     excerpt: str = Field(..., min_length=20, max_length=800)
     category: str = Field(..., min_length=2, max_length=60)
     read_minutes: int = Field(default=6, ge=1, le=60)
+    image_url: str = Field(default="", max_length=500)
 
 
 # ---------- Email helper (best-effort, non-blocking) ----------
@@ -292,49 +294,81 @@ _SEED_INSIGHTS = [
         "excerpt": "Governance debt, dataset sprawl and no adoption metrics. The three quiet killers of enterprise BI programmes and the levers that fix them.",
         "category": "Power BI",
         "read_minutes": 6,
+        "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
     },
     {
         "title": "RPA vs Power Automate vs Copilot Studio — the 2026 decision tree",
         "excerpt": "A pragmatic decision framework we use with clients to pick the right automation tool for each of the 40+ processes we typically inventory in week one.",
         "category": "Automation",
         "read_minutes": 8,
+        "image_url": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
     },
     {
         "title": "OEE dashboards that plant managers actually use",
         "excerpt": "Six design principles behind the automotive OEE dashboards we deploy — and the anti-patterns that quietly kill adoption on the shop floor.",
         "category": "Automotive",
         "read_minutes": 5,
+        "image_url": "https://images.unsplash.com/photo-1565043666747-69f6646db940?auto=format&fit=crop&w=1200&q=80",
     },
     {
         "title": "Closing the books in 2.5 days: a Power BI + Power Automate blueprint",
         "excerpt": "How we compressed a mid-market bank's monthly close from 9 days to 2.5, moving 42 Excel workbooks into a single governed pipeline.",
         "category": "Financial",
         "read_minutes": 7,
+        "image_url": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=1200&q=80",
     },
     {
         "title": "Renewables asset performance: from post-mortem reports to live triage",
         "excerpt": "The four telemetry patterns that let a European IPP replace weekly PDFs with a Fabric-backed live triage cockpit — and cut ticket handling by 55%.",
         "category": "Energy",
         "read_minutes": 6,
+        "image_url": "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=1200&q=80",
     },
     {
         "title": "HIPAA-aware analytics: the 5 controls we bake in on day one",
         "excerpt": "Row-level security, audit lineage, tokenised PHI, provisioned workspaces and evidence packs — how we make healthcare BI defensible without slowing delivery.",
         "category": "Health",
         "read_minutes": 5,
+        "image_url": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+    },
+    {
+        "title": "Semantic models that survive scale — the 7 patterns we always use",
+        "excerpt": "Star schemas alone don't cut it above 500M rows. The performance patterns we standardise on: aggregations, incremental refresh, composite models and more.",
+        "category": "Power BI",
+        "read_minutes": 9,
+        "image_url": "https://images.unsplash.com/photo-1543286386-713bdd548da4?auto=format&fit=crop&w=1200&q=80",
+    },
+    {
+        "title": "The 20-hour rule: how we scope every Power Platform pilot",
+        "excerpt": "A repeatable playbook to de-risk your first Power Apps or Power Automate build — 20 hours of scoping saves 200 hours of rework.",
+        "category": "Power Platform",
+        "read_minutes": 4,
+        "image_url": "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+    },
+    {
+        "title": "Copilot Studio in the enterprise: what it's ready for (and what it isn't)",
+        "excerpt": "A candid, adoption-first review of Copilot Studio across three real client rollouts — where it earns its keep and where it still needs a human co-pilot.",
+        "category": "Copilot",
+        "read_minutes": 7,
+        "image_url": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1200&q=80",
     },
 ]
 
 
 async def _ensure_insights_seed():
-    if await db.insights.count_documents({}) > 0:
+    # Reseed if collection is empty OR if existing docs are missing image_url
+    count = await db.insights.count_documents({})
+    missing = await db.insights.count_documents({"$or": [{"image_url": {"$exists": False}}, {"image_url": ""}]})
+    if count > 0 and missing == 0:
         return
+    if count > 0:
+        # backfill image_url on existing seeded docs
+        await db.insights.delete_many({"title": {"$in": [s["title"] for s in _SEED_INSIGHTS]}})
     now = datetime.now(timezone.utc).timestamp()
     docs = []
     for i, s in enumerate(_SEED_INSIGHTS):
         post = InsightPost(**s)
         d = post.model_dump()
-        # Stagger published_at ~30 days apart so the newest is on top.
         offset_days = i * 30
         d["published_at"] = datetime.fromtimestamp(now - offset_days * 86400, tz=timezone.utc).isoformat()
         docs.append(d)

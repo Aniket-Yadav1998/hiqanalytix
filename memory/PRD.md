@@ -24,6 +24,13 @@ Build a premium enterprise-grade corporate website for **hiqanalytix**, a techno
 7. Footer with company info, nav, services, industries.
 8. Fully responsive; dark premium enterprise aesthetic; smooth scrolling.
 
+## What's been implemented — 2026-01 (iteration 6)
+- **Insights redesigned** — two-column layout with a **sticky left column** (INSIGHTS eyebrow, "Field notes from the trenches." title, subscribe CTA quote block) and a **vertical stack of post cards on the right** exactly as requested.
+- **Each post card is now image + text**: 224px left thumbnail (16/10 aspect on mobile, side-by-side on desktop) with real Unsplash imagery mapped per category (Power BI charts, RPA circuit, automotive, financial trading, wind turbines, healthcare, semantic models, Power Platform teamwork, Copilot). Right side: date · read-time meta, bold title, excerpt, and "Read note" CTA. Category tag overlays the top-left of each image.
+- **Progressive disclosure**: first render shows **exactly 5 posts**; a "**Load 3 more notes N/Total**" button reveals 3 more each click; when everything is shown the button is replaced with a "You're all caught up · N notes shown" line. State variable `visible = 5 + n * 3`.
+- **Backend seed expanded to 9 posts** with `image_url` field added to `InsightPost` + `InsightCreate` models. Startup seed is now **self-healing**: if any existing docs are missing `image_url`, it deletes and reseeds to backfill.
+- Card `data-testid=insight-card-{id}`, section `data-testid=insights-section`, list container `data-testid=insights-list`, button `data-testid=insights-load-more`.
+
 ## What's been implemented — 2026-01 (iteration 5)
 - **Client Logos Strip** — new marquee strip directly under the hero ("Trusted by operators across five industries") with 10 tastefully-typed client tiles that pause on hover.
 - **Lead Email Notifications** — Resend integration wired into both `POST /api/contact` and `POST /api/roi-estimate` via FastAPI `BackgroundTasks` + `asyncio.to_thread`. Emails render as clean HTML with all lead fields + computed ROI numbers. **Best-effort, non-blocking**: if `RESEND_API_KEY` is unset (or the send fails), the API still returns 201 immediately and the lead is safe in the DB. Health endpoint now reports `email_configured` boolean.
