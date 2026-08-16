@@ -134,6 +134,16 @@ You will meet the database directly in a friendly web UI in the next step (H2 Co
 <a id="part-e"></a>
 ## Part E — Run the Java backend locally
 
+> **⚠️ Important — pick the right folder!**
+> Your project has **two** backend folders that look similar. Only open **one** of them in IntelliJ:
+> - ✅ **Use this one:** `hiqanalytix/deliverables/spring-boot/` — the **Java Spring Boot** project (contains `pom.xml`)
+> - ❌ **Do NOT open this one:** `hiqanalytix/backend/` — that's the Python FastAPI backend used only by the Emergent preview. It has no Java in it, which is why you would not see `ContactApiApplication.java` if you opened it by mistake.
+>
+> Inside `deliverables/spring-boot/` your Java main class lives at:
+> ```
+> src/main/java/com/hiqanalytix/contactapi/ContactApiApplication.java
+> ```
+
 1. Open **IntelliJ IDEA** → **File → Open…** → select the folder `hiqanalytix/deliverables/spring-boot` → **Open as Project** → click **Trust Project**.
 2. Wait 1–3 minutes while IntelliJ downloads Maven dependencies (progress bar bottom-right).
 3. If IntelliJ complains about "Project SDK not defined", go to **File → Project Structure → Project → SDK** and pick the Temurin **21** JDK you installed in B.3.
@@ -258,7 +268,7 @@ We will convert the Internal URL to Spring Boot's JDBC format in Part I.
    | **Branch** | `main` |
    | **Root Directory** | `deliverables/spring-boot` |
    | **Runtime** | `Java` |
-   | **Build Command** | `./mvnw clean package -DskipTests` |
+   | **Build Command** | `mvn clean package -DskipTests` |
    | **Start Command** | `java -jar target/contact-api-0.0.1-SNAPSHOT.jar` |
    | **Instance Type** | `Free` |
 3. Scroll to **Environment Variables → Add Environment Variable** and add these **four** variables. Convert the Internal DB URL you copied in Part H (format: `postgresql://USER:PASSWORD@HOST:PORT/DBNAME`) into these four values:
@@ -471,7 +481,7 @@ Priority actions that move the needle for a young consultancy site:
 | **`Port 3000 is already in use`** | Type `y` when `yarn start` asks to use 3001, or kill the other process. |
 | **`Port 8080 is already in use`** | Edit `deliverables/spring-boot/src/main/resources/application.properties`, change `server.port=8081`, and update `REACT_APP_BACKEND_URL` in `frontend/.env` to `http://localhost:8081`. |
 | **H2 Console cannot log in** | Make sure the JDBC URL matches exactly: `jdbc:h2:file:./data/hiqdb;AUTO_SERVER=TRUE`. Case sensitive. |
-| **Render build fails with `permission denied ./mvnw`** | Run once in the repo `git update-index --chmod=+x deliverables/spring-boot/mvnw && git commit -m "chmod mvnw" && git push`. |
+| **Render build fails with `permission denied ./mvnw`** | Use build command `mvn clean package -DskipTests` — Render's Java runtime ships Maven, no wrapper needed. |
 | **"This site can't be reached" on hiqanalytix.com** | DNS not propagated yet — wait 30 minutes. Check https://dnschecker.org — enter `hiqanalytix.com` → the world map should mostly show green `76.76.21.21`. |
 | **I changed a file — how do I redeploy?** | `git add . && git commit -m "…" && git push`. Vercel and Render both auto-deploy on push to `main`. |
 | **How do I wipe local DB?** | Stop Spring Boot, delete the `deliverables/spring-boot/data/` folder, start again. |
