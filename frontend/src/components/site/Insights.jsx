@@ -76,16 +76,22 @@ function InsightCard({ p, i }) {
             className="group flex flex-col overflow-hidden border border-neutral-200 bg-white shadow-sm transition-shadow duration-300 hover:shadow-xl sm:flex-row"
         >
             <div className="relative aspect-[16/10] w-full flex-none overflow-hidden sm:aspect-auto sm:h-auto sm:w-56">
-                <img
-                    src={p.image_url}
-                    alt={p.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        e.currentTarget.parentElement.classList.add("bg-orange-50");
-                    }}
-                />
+                {p.image_url ? (
+                    <img
+                        src={p.image_url}
+                        alt={p.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            e.currentTarget.parentElement.classList.add("bg-orange-50");
+                        }}
+                    />
+                ) : (
+                    <div className="grid h-full w-full place-items-center bg-orange-50 text-orange-500">
+                        <span className="font-display text-2xl font-bold">hq</span>
+                    </div>
+                )}
                 <span className="absolute left-3 top-3 border border-orange-200 bg-white/95 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-700 backdrop-blur-sm">
                     {p.category}
                 </span>
@@ -157,16 +163,27 @@ export default function Insights() {
                     {/* LEFT — sticky editorial header */}
                     <aside className="lg:col-span-4">
                         <div className="lg:sticky lg:top-28">
-                            <span className="text-xs uppercase tracking-[0.25em] text-orange-600">
-                                Insights
-                            </span>
+                            <div className="mb-4 flex items-center gap-3">
+                                <span className="h-px w-10 bg-orange-500" />
+                                <span
+                                    data-testid="insights-eyebrow"
+                                    className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-600"
+                                >
+                                    Insights · {items.length} notes
+                                </span>
+                            </div>
                             <h2
                                 data-testid="insights-heading"
-                                className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl"
+                                className="font-display text-4xl font-extrabold leading-[0.95] tracking-tight text-neutral-900 md:text-5xl lg:text-6xl"
                             >
                                 Field notes
                                 <br />
-                                from the trenches.
+                                from the
+                                <br />
+                                <span className="relative inline-block text-orange-500">
+                                    trenches.
+                                    <span className="absolute -bottom-1 left-0 h-1 w-full bg-orange-500/80" />
+                                </span>
                             </h2>
                             <p className="mt-6 max-w-md text-base leading-relaxed text-neutral-800">
                                 Short, opinionated reads on how we run Power BI programmes,
@@ -187,6 +204,22 @@ export default function Insights() {
                                 >
                                     Subscribe via email
                                 </a>
+                            </div>
+
+                            {/* Live pulse indicator */}
+                            <div className="mt-8 hidden items-center gap-3 border border-neutral-200 bg-neutral-50 p-3 lg:flex">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                                </span>
+                                <div className="min-w-0">
+                                    <div className="truncate text-[10px] uppercase tracking-widest text-neutral-500">
+                                        Just published
+                                    </div>
+                                    <div className="truncate text-xs font-semibold text-neutral-900">
+                                        {items[0]?.title || "Field notes from the trenches."}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </aside>

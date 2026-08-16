@@ -3,7 +3,8 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
-import { Calculator, TrendDown, UsersThree, Clock } from "@phosphor-icons/react";
+import { Calculator, TrendDown, UsersThree, Clock, ChartLineUp, Lightning } from "@phosphor-icons/react";
+import useCountUp from "@/hooks/useCountUp";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -190,6 +191,13 @@ export default function RoiCalculator() {
 }
 
 function RoiResult({ r }) {
+    // Count-up animated numbers
+    const money = useCountUp(r.money_savings_pct, { duration: 1400 });
+    const manpower = useCountUp(r.manpower_reduction_pct, { duration: 1600 });
+    const time = useCountUp(r.time_reduction_pct, { duration: 1800 });
+    const projPeople = useCountUp(r.projected_manpower, { duration: 1600, decimals: 2 });
+    const projHours = useCountUp(r.projected_hours_per_week, { duration: 1800, decimals: 1 });
+
     const savingsData = [
         { name: "You reclaim", value: r.money_savings_pct, color: ORANGE },
         { name: "Remaining spend", value: 100 - r.money_savings_pct, color: MUTED },
@@ -203,6 +211,16 @@ function RoiResult({ r }) {
         { name: "Remaining", value: 100 - r.time_reduction_pct, color: MUTED },
     ];
 
+    // Faux 8-week growth curve — cumulative saving trending up
+    const curve = Array.from({ length: 12 }, (_, i) => {
+        const pct = 1 - Math.exp(-i / 3.2);
+        return Math.round(pct * r.money_savings_pct);
+    });
+    const maxCurve = Math.max(...curve, 1);
+    const points = curve
+        .map((v, i) => `${(i / (curve.length - 1)) * 100},${100 - (v / maxCurve) * 100}`)
+        .join(" ");
+
     return (
         <motion.div
             data-testid="roi-result"
@@ -213,8 +231,8 @@ function RoiResult({ r }) {
         >
             <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <span className="text-xs uppercase tracking-[0.25em] text-orange-600">
-                        Your estimate
+                    <span className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-orange-600">
+                        <Lightning size={14} weight="fill" /> Your live estimate
                     </span>
                     <h3 className="mt-2 font-display text-3xl font-extrabold text-neutral-900 md:text-4xl">
                         Projected impact for {r.company}
@@ -226,36 +244,181 @@ function RoiResult({ r }) {
                         <span className="italic">{r.current_tools}</span>
                     </p>
                 </div>
-                <span className="border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
-                    Saved to your consultant
+                <span className="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                    Saved · Sales notified
                 </span>
             </div>
 
+            {/* Animated dashboard mock header */}
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="mt-10 overflow-hidden border border-neutral-200 bg-neutral-50"
+            >
+                <div className="flex items-center gap-2 border-b border-neutral-200 bg-white px-4 py-2.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <div className="ml-3 flex-1 truncate text-[11px] text-neutral-500">
+                        hiqanalytix.com/roi/{r.company.toLowerCase().replace(/\s+/g, "-")}
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-700">
+                        <ChartLineUp size={12} weight="bold" /> Live projection
+                    </span>
+                </div>
+
+                {/* Big KPI counters */}
+                <div className="grid grid-cols-1 gap-px bg-neutral-200 md:grid-cols-3">
+                    <div className="bg-white p-6" data-testid="roi-kpi-money">
+                        <div className="flex items-center gap-2 text-orange-500">
+                            <TrendDown size={16} weight="duotone" />
+                            <span className="text-[10px] uppercase tracking-widest text-neutral-700">
+                                Annualised cost saved
+                            </span>
+                        </div>
+                        <div className="mt-3 flex items-baseline gap-2">
+                            <span className="font-display text-4xl font-extrabold text-neutral-900 md:text-5xl">
+                                {money}%
+                            </span>
+                            <span className="text-xs text-neutral-700">of your run-rate</span>
+                        </div>
+                        <div className="mt-5 h-1.5 w-full overflow-hidden bg-neutral-100">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${r.money_savings_pct}%` }}
+                                transition={{ duration: 1.4, ease: "easeOut" }}
+                                className="h-full bg-orange-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6" data-testid="roi-kpi-manpower">
+                        <div className="flex items-center gap-2 text-orange-500">
+                            <UsersThree size={16} weight="duotone" />
+                            <span className="text-[10px] uppercase tracking-widest text-neutral-700">
+                                Manpower released
+                            </span>
+                        </div>
+                        <div className="mt-3 flex items-baseline gap-2">
+                            <span className="font-display text-4xl font-extrabold text-neutral-900 md:text-5xl">
+                                {manpower}%
+                            </span>
+                            <span className="text-xs text-neutral-700">
+                                ~ {projPeople} FTE to redeploy
+                            </span>
+                        </div>
+                        <div className="mt-5 h-1.5 w-full overflow-hidden bg-neutral-100">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${r.manpower_reduction_pct}%` }}
+                                transition={{ duration: 1.6, ease: "easeOut" }}
+                                className="h-full bg-orange-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6" data-testid="roi-kpi-time">
+                        <div className="flex items-center gap-2 text-orange-500">
+                            <Clock size={16} weight="duotone" />
+                            <span className="text-[10px] uppercase tracking-widest text-neutral-700">
+                                Execution time cut
+                            </span>
+                        </div>
+                        <div className="mt-3 flex items-baseline gap-2">
+                            <span className="font-display text-4xl font-extrabold text-neutral-900 md:text-5xl">
+                                {time}%
+                            </span>
+                            <span className="text-xs text-neutral-700">
+                                ~ {projHours} hrs/wk left
+                            </span>
+                        </div>
+                        <div className="mt-5 h-1.5 w-full overflow-hidden bg-neutral-100">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${r.time_reduction_pct}%` }}
+                                transition={{ duration: 1.8, ease: "easeOut" }}
+                                className="h-full bg-orange-500"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Cumulative saving curve */}
+                <div className="border-t border-neutral-200 bg-white p-6">
+                    <div className="flex items-end justify-between">
+                        <div>
+                            <div className="text-[10px] uppercase tracking-widest text-neutral-700">
+                                Cumulative saving · first 12 weeks
+                            </div>
+                            <div className="mt-1 font-display text-xl font-bold text-neutral-900">
+                                Approaching {r.money_savings_pct}% run-rate
+                            </div>
+                        </div>
+                        <span className="text-[11px] uppercase tracking-widest text-neutral-500">
+                            week 1 → week 12
+                        </span>
+                    </div>
+
+                    <div className="relative mt-4 h-40 w-full">
+                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+                            <defs>
+                                <linearGradient id="roi-grad" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stopColor="#F97316" stopOpacity="0.35" />
+                                    <stop offset="100%" stopColor="#F97316" stopOpacity="0" />
+                                </linearGradient>
+                            </defs>
+                            {/* horizontal gridlines */}
+                            {[0, 25, 50, 75, 100].map((y) => (
+                                <line key={y} x1="0" y1={y} x2="100" y2={y}
+                                      stroke="#E5E5E5" strokeWidth="0.2" strokeDasharray="1 1" />
+                            ))}
+                            <motion.polygon
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.6, duration: 0.6 }}
+                                points={`0,100 ${points} 100,100`}
+                                fill="url(#roi-grad)"
+                            />
+                            <motion.polyline
+                                initial={{ pathLength: 0 }}
+                                animate={{ pathLength: 1 }}
+                                transition={{ delay: 0.3, duration: 1.6, ease: "easeOut" }}
+                                points={points}
+                                fill="none"
+                                stroke="#F97316"
+                                strokeWidth="0.8"
+                                vectorEffect="non-scaling-stroke"
+                            />
+                            {/* endpoint dot */}
+                            <motion.circle
+                                cx="100" cy={100 - (curve[curve.length - 1] / maxCurve) * 100} r="1.2"
+                                fill="#F97316"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: [0, 2.2, 1] }}
+                                transition={{ delay: 1.9, duration: 0.6 }}
+                            />
+                        </svg>
+                    </div>
+
+                    {/* Weekly ticks */}
+                    <div className="mt-2 flex justify-between text-[9px] uppercase tracking-widest text-neutral-500">
+                        {["W1", "W3", "W5", "W7", "W9", "W12"].map((w) => (
+                            <span key={w}>{w}</span>
+                        ))}
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Original pie chart trio kept for depth */}
             <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-                <StatCard
-                    icon={PiggyBankPlaceholder}
-                    title="Cost saving"
-                    value={`${r.money_savings_pct}%`}
-                    subtitle="of what you spend today"
-                    data={savingsData}
-                    testid="roi-chart-cost"
-                />
-                <StatCard
-                    icon={UsersThree}
-                    title="Less manpower"
-                    value={`${r.manpower_reduction_pct}%`}
-                    subtitle={`down to ~${r.projected_manpower} people`}
-                    data={manpowerData}
-                    testid="roi-chart-manpower"
-                />
-                <StatCard
-                    icon={Clock}
-                    title="Faster execution"
-                    value={`${r.time_reduction_pct}%`}
-                    subtitle={`~${r.projected_hours_per_week} hrs / wk after`}
-                    data={timeData}
-                    testid="roi-chart-time"
-                />
+                <StatCard icon={TrendDown} title="Cost saving" value={`${r.money_savings_pct}%`}
+                          subtitle="of what you spend today" data={savingsData} testid="roi-chart-cost" />
+                <StatCard icon={UsersThree} title="Less manpower" value={`${r.manpower_reduction_pct}%`}
+                          subtitle={`down to ~${r.projected_manpower} people`} data={manpowerData} testid="roi-chart-manpower" />
+                <StatCard icon={Clock} title="Faster execution" value={`${r.time_reduction_pct}%`}
+                          subtitle={`~${r.projected_hours_per_week} hrs / wk after`} data={timeData} testid="roi-chart-time" />
             </div>
 
             <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 pt-6">
@@ -266,19 +429,13 @@ function RoiResult({ r }) {
                 <a
                     href="#contact"
                     data-testid="roi-cta-contact"
-                    className="inline-flex items-center gap-2 bg-orange-500 px-6 py-3.5 font-medium text-white transition-colors duration-200 hover:bg-orange-600"
+                    className="inline-flex items-center gap-2 bg-orange-500 px-6 py-3.5 font-medium text-white shadow-lg shadow-orange-500/20 transition-colors duration-200 hover:bg-orange-600"
                 >
                     Book a discovery call
                 </a>
             </div>
         </motion.div>
     );
-}
-
-function PiggyBankPlaceholder(props) {
-    // Local wrapper so we can pass the Phosphor icon without importing here again.
-    // Using TrendDown as a proxy for "cost coming down".
-    return <TrendDown {...props} />;
 }
 
 function StatCard({ icon: Icon, title, value, subtitle, data, testid }) {

@@ -24,6 +24,31 @@ Build a premium enterprise-grade corporate website for **hiqanalytix**, a techno
 7. Footer with company info, nav, services, industries.
 8. Fully responsive; dark premium enterprise aesthetic; smooth scrolling.
 
+## What's been implemented — 2026-01 (iteration 7 & 8: TCS-grade premium upgrade)
+- **New animated Hero** (`HeroDashboardMock.jsx` + `Hero.jsx`):
+  - **Right-side animated SVG dashboard preview**: browser chrome + LIVE badge, 3 KPI tiles (Revenue / OEE / Backlog), monthly performance bar chart (before vs after), cost-saved sparkline with animated draw, 3 floating badges (€12.4M ▲18.2%, 2,148 hrs reclaimed, 99.98% uptime).
+  - **Rotating service tagline** ("We ship enterprise-grade [Power BI dashboards | Power Automate flows | Copilot Studio agents | Microsoft Fabric pipelines | Enterprise Power Apps]") cycling every 2.4s with y-slide crossfade.
+  - Animated underline sweep on "responsibility.", floating background dots, staggered metric fade-in.
+  - Trust ribbons: Microsoft Solutions Partner · ISO 27001-aligned · GDPR & HIPAA-aware.
+- **Premium Navbar redesign**:
+  - Dark utility strip on top (email, phone, "Global delivery · GMT / IST / EST" with pulsing dot, latest field notes link) that collapses on scroll.
+  - Custom **SVG logo mark** (H+ orange tile with tagline "POWER BI · AUTOMATION").
+  - Animated underline sweep on hover for nav links.
+  - "Book a demo" CTA with arrow icon + orange shadow.
+  - **Orange scroll-progress bar** anchored under the nav (framer-motion `useScroll` + `useSpring`).
+- **Insights header polished**:
+  - Small orange line accent + dynamic "INSIGHTS · N NOTES" count badge (N matches actual loaded posts).
+  - Stacked 3-line "Field notes / from the / trenches." with orange underline block on "trenches.".
+  - Live pulse indicator card showing "JUST PUBLISHED — {newest post title}" with animated ping dot.
+- **ROI dashboard-animation rewrite**:
+  - "SAVED · SALES NOTIFIED" pulse badge on submit.
+  - Full mini-dashboard container with browser chrome and "LIVE PROJECTION" tag.
+  - **Animated count-up numbers** via new `useCountUp.js` hook (easeOutCubic RAF).
+  - **Animated horizontal progress bars** filling from 0 to target % over ~1.4-1.8s.
+  - **Cumulative-saving SVG polyline curve** (12-point exponential ramp W1→W12) that draws itself via framer `pathLength` animation, gradient fill, endpoint pulse dot.
+  - Original pie chart trio kept below for depth.
+- Testing agent iterations 7 & 8: **100% backend + 100% frontend**. Utility strip hides on scroll, no empty-src console warnings, all animations verified, ROI E2E (10 people / 400 hrs → 35% / 55%/4.5 FTE / 35%/260 hrs) confirmed.
+
 ## What's been implemented — 2026-01 (iteration 6)
 - **Insights redesigned** — two-column layout with a **sticky left column** (INSIGHTS eyebrow, "Field notes from the trenches." title, subscribe CTA quote block) and a **vertical stack of post cards on the right** exactly as requested.
 - **Each post card is now image + text**: 224px left thumbnail (16/10 aspect on mobile, side-by-side on desktop) with real Unsplash imagery mapped per category (Power BI charts, RPA circuit, automotive, financial trading, wind turbines, healthcare, semantic models, Power Platform teamwork, Copilot). Right side: date · read-time meta, bold title, excerpt, and "Read note" CTA. Category tag overlays the top-left of each image.

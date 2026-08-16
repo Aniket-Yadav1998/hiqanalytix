@@ -1,0 +1,30 @@
+{
+  "summary": "Regression + new-feature testing for the TCS.com-grade premium upgrade (Hero rotator + HeroDashboardMock, redesigned Navbar with utility strip + scroll progress, Insights header with count badge, ROI count-up KPIs + cumulative-saving polyline). Backend: 20/20 pytest passed (health, contact CRUD, ROI 35/55/35 with projected_manpower=4.5 & projected_hours_per_week=260.0, insights >=6 with image_url, og-cover.png). Frontend: All 6 new data-testids render and animate correctly at 1440x900. Hero rotator cycled 5 distinct phrases in 9s. HeroDashboardMock visible. nav-utility shows 'hello@hiqanalytix.com'. nav-scroll-progress present. Insights header renders 'INSIGHTS · 12 NOTES' (N=12, matches loaded posts and >5). Load More increments 5->8. ROI submit flow: KPIs show 35%/55%/35% after count-up (~2.5s wait), cumulative-saving SVG polyline rendered inside roi-result. Zero meaningful React console errors from the new components.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Navbar", "issues": ["nav-utility (top strip with email/phone/global delivery) remained visible after scrolling to y=600; requirement stated it should hide on scroll. Verify Navbar.jsx scroll listener / conditional hide logic."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_roi_api.py",
+    "/app/backend/tests/test_contact_api.py",
+    "/app/backend/tests/test_insights_and_new_features.py",
+    "/app/test_reports/pytest/iteration_7.xml"
+  ],
+  "action_items": [
+    "Minor: Ensure nav-utility strip hides (translate-y / display:none) once window.scrollY > ~40px. Currently stayed visible at scrollY=600."
+  ],
+  "critical_code_review_comments": [
+    "RoiCalculator.jsx exposes both `roi-submit-btn` (actual) and the review-request mentioned `roi-submit`; the current testid is fine but keep naming consistent (roi-input-* vs roi-kpi-*).",
+    "Two console warnings: 'An empty string (\"\") was passed to the src attribute' fired 3x on initial load — likely an <img src={someImg || ''} /> pattern in a hero/insights component. Should use null or conditional render to avoid re-downloading the page. Non-blocking but easy fix."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "~95% (all core assertions pass; only nav-utility hide-on-scroll behavior deviates)"},
+  "seed_data_creation": "None new; TEST_ prefixed contact/roi/insight rows created by pytest and left in DB (safe to leave, prefixed).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Correct ROI form test-ids are `roi-input-name/email/company/industry/manpower/hours/tools` and submit is `roi-submit-btn` (not `roi-submit`). KPI blocks: roi-kpi-money/manpower/time — text needs 'contains 35%'/'55%'/'35%' assertion, wait ~2500-3000ms for useCountUp to complete. Cumulative-saving polyline lives inside `[data-testid=roi-result] svg polyline` (count==1). Insights header text is 'INSIGHTS · N NOTES' (uppercase from CSS) — use case-insensitive regex."
+}

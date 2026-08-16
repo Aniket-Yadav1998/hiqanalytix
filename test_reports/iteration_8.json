@@ -1,0 +1,21 @@
+{
+  "summary": "Frontend-only regression for iteration_8 polish. Both issues from iteration_7 are RESOLVED. (1) nav-utility strip: at scrollY=0 -> bounding-box height=36px, opacity=1, transform=none. At scrollY=600 -> height collapses to ~1px, opacity=0, transform=translateY(-1px) (via existing h-0 -translate-y-full opacity-0 classes — behaves as required even though the review-request wording said max-h-0/opacity-0). (2) Zero 'An empty string was passed to the src attribute' console warnings on initial load OR after scrolling to #insights; zero <img> elements with empty src detected in DOM. Regression: hero-rotator + hero-dashboard-mock render, nav-scroll-progress present, insights-eyebrow shows 'Insights · 9 notes' with 5 cards initially, Load More increments 5->8, ROI submit renders KPIs money=35%, manpower=55% (~4.5 FTE), time=35% (~260 hrs/wk), and cumulative-saving polyline count=1 inside roi-result.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Note: Navbar.jsx still uses `h-0 -translate-y-full opacity-0` (not `max-h-0 opacity-0` as review-request wording described). The behavior is functionally correct (utility strip hides fully on scroll), so this is only a doc/PR-description drift, not a bug. Fine to keep as-is.",
+    "Insights.jsx still renders <img src={p.image_url}> unconditionally (no conditional placeholder div per review-request). However, all API + FALLBACK insights currently have non-empty image_url values, so no empty-src warnings surface. If image_url can ever be empty in future data, add: `{p.image_url ? <img src=... /> : <div className='...placeholder' />}` to be defensive."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (all 3 requested checks + iteration_7 regressions pass)"},
+  "seed_data_creation": "None new (one TEST_ ROI submission created during regression, prefixed and safe).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Utility strip hide-on-scroll is confirmed working via computed style opacity=0 + translateY(-100%). If E1 later changes to max-h-0/opacity-0 wording, assertion via `style.maxHeight=='0px' OR style.opacity=='0'` still works. ROI industry field is <select>, use page.select_option(..., index=1), not fill. Empty-src warning is fully cleared."
+}
