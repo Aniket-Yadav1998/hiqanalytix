@@ -178,6 +178,27 @@ You will meet the database directly in a friendly web UI in the next step (H2 Co
 <a id="part-f"></a>
 ## Part F — Run the React frontend locally
 
+> **⚠️ You will NOT see a `.env` file in `frontend/` yet.**
+> This is by design — `.env` is git-ignored so nobody accidentally commits secrets. You need to **create it yourself** (once):
+>
+> **On Windows:**
+> 1. Open the `hiqanalytix/frontend/` folder in File Explorer.
+> 2. If you don't see `.env.example`, click **View → Show → Hidden items** (once for this session).
+> 3. **Right-click `.env.example` → Copy**, then **Paste** it in the same folder. Rename the copy to just `.env` (no extension after the dot). If Windows complains "You need to provide a file name", right-click → **Rename** → type `.env.` (with a trailing dot) → press Enter — the trailing dot is stripped automatically.
+> 4. Open `.env` in Notepad and confirm it contains exactly:
+>    ```
+>    REACT_APP_BACKEND_URL=http://localhost:8080
+>    ```
+> 5. Save the file.
+>
+> **On macOS / Linux:**
+> ```bash
+> cd hiqanalytix/frontend
+> cp .env.example .env
+> # (optional) open and edit
+> nano .env
+> ```
+
 Open a **new** terminal (keep the Java one running).
 
 ```bash
@@ -185,7 +206,7 @@ cd ~/projects/hiqanalytix/frontend
 yarn install         # ~1 minute, only the first time
 ```
 
-Point the frontend at the local Java backend. Open `frontend/.env` in any text editor and change **just this line**:
+Point the frontend at the local Java backend by making sure `frontend/.env` contains:
 ```
 REACT_APP_BACKEND_URL=http://localhost:8080
 ```
