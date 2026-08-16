@@ -24,6 +24,15 @@ Build a premium enterprise-grade corporate website for **hiqanalytix**, a techno
 7. Footer with company info, nav, services, industries.
 8. Fully responsive; dark premium enterprise aesthetic; smooth scrolling.
 
+## What's been implemented — 2026-01 (iteration 4)
+- **Domain locked to `hiqanalytix.com`** across meta tags, canonical URL, Open Graph, Twitter cards, JSON-LD schemas, sitemap.xml, robots.txt, footer copy, and setup guide.
+- **Enterprise-grade SEO** — SEO-optimized title (`hiqanalytix — Power BI & Automation Consulting Firm | Your trust is our responsibility`), keyword-rich meta description, long-tail keyword meta, Open Graph + Twitter card previews, canonical link, robots directives, Google/Bing indexability.
+- **JSON-LD structured data** — 3 schemas (`Organization`, `ProfessionalService`, `WebSite`) with slogan, services list, contact point, `sameAs` — powers Google's rich brand panel.
+- **`/robots.txt` + `/sitemap.xml`** shipped in `frontend/public/` referencing 8 anchor URLs.
+- **Copy SEO pass** — Hero, About, Footer now use "**consulting firm**" / "**consultancy**" language for keyword alignment (was "technology services partner").
+- **Setup guide expanded** — added Part M (SEO launch checklist): Google Search Console verification, sitemap submission, Bing Webmaster Tools, Google Business Profile, backlink strategy (LinkedIn, Clutch, G2, Microsoft Partner Directory), optional GA4 snippet + expected timeline.
+- Added a prominent "**📄 Where is this file?**" pointer at the top of the guide directing users to `hiqanalytix/SETUP_GUIDE.md`.
+
 ## What's been implemented — 2026-01 (iteration 3)
 - Full React marketing site: Navbar, Hero, About, Services, **TechStack marquee**, **Case Studies**, **ROI Calculator (interactive, with pie charts backed by DB)**, Industries, Contact, Footer.
 - **Light theme: white background + orange (#F97316) accent system**.

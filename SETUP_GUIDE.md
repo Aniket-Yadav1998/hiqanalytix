@@ -1,10 +1,18 @@
 # hiqanalytix — Master Setup & Deployment Guide
 
+> **📄 Where is this file?**
+> The full guide you're reading right now lives in your project folder at:
+> ```
+> hiqanalytix/SETUP_GUIDE.md
+> ```
+> On GitHub it will be at the root of your repository (top of the file list on the repo homepage). You can open it in any text editor, VS Code, IntelliJ, or view it rendered on GitHub — every heading is clickable.
+
 > Written like you have **never** built a website before. Every step is one you can copy-paste. By the end you will have:
 >
 > 1. The full website running on **your laptop** (React on `localhost:3000` + Java Spring Boot on `localhost:8080` + a **local database** where every contact/ROI form submission is saved).
-> 2. The same website **live on the internet**, served from your **GoDaddy domain** (e.g. `https://hiqanalytix.com`), with a **real, always-on cloud database**.
+> 2. The same website **live on the internet**, served from your GoDaddy domain **`https://hiqanalytix.com`**, with a **real, always-on cloud database**.
 > 3. A way to **see every lead** (contact enquiries + ROI calculator submissions) directly in the database.
+> 4. Strong SEO so `hiqanalytix.com` starts showing up on Google when people search for a Power BI or automation **consulting firm / consultancy**.
 >
 > **Total extra cost beyond the GoDaddy domain you already own: $0** using the free tiers of Vercel and Render.
 
@@ -24,7 +32,8 @@
 - [Part J — Deploy the React frontend to Vercel (free)](#part-j)
 - [Part K — Connect your GoDaddy domain](#part-k)
 - [Part L — See your leads in the live database](#part-l)
-- [Part M — Common problems & fixes](#part-m)
+- [Part M — Rank on Google (SEO launch checklist)](#part-m)
+- [Part N — Common problems & fixes](#part-n)
 
 ---
 
@@ -368,7 +377,74 @@ You have three ways to browse the live PostgreSQL:
 ---
 
 <a id="part-m"></a>
-## Part M — Common problems & fixes
+## Part M — Rank on Google (SEO launch checklist)
+
+Your website already ships with:
+- A strong `<title>` and meta description targeting **"Power BI consulting firm"** / **"automation consultancy"**.
+- Rich keyword meta covering all 5 industries.
+- Open Graph + Twitter card previews so LinkedIn, Slack, Twitter, WhatsApp all show a clean preview when someone shares your link.
+- **JSON-LD structured data** describing hiqanalytix as an `Organization` + `ProfessionalService` — Google uses this for the rich brand panel on the right side of results.
+- `/robots.txt` and `/sitemap.xml` pointing to `https://hiqanalytix.com/sitemap.xml`.
+- A canonical URL of `https://hiqanalytix.com/` (no duplicate content penalty).
+
+Do these five one-time actions the day your domain goes live:
+
+### M.1  Verify the site in Google Search Console (5 min)
+1. Go to https://search.google.com/search-console → **Add property** → **URL prefix** → type `https://hiqanalytix.com/` → **Continue**.
+2. Google shows verification methods. Pick **HTML tag** — copy the `content="…"` value.
+3. In your project open `frontend/public/index.html`. Right after the `<meta name="publisher" ...>` line paste:
+   ```html
+   <meta name="google-site-verification" content="PASTE_THE_VALUE_HERE" />
+   ```
+4. Commit + push:
+   ```bash
+   git add . && git commit -m "seo: gsc verification" && git push
+   ```
+5. Wait 1–2 min for Vercel to redeploy, then click **Verify** in Search Console.
+
+### M.2  Submit your sitemap (2 min)
+Still inside Search Console → left menu **Sitemaps** → paste `https://hiqanalytix.com/sitemap.xml` → **Submit**.
+
+### M.3  Set up Bing Webmaster Tools (2 min)
+1. https://www.bing.com/webmasters → **Import from Google Search Console** (free, one-click).
+2. Submit the same `sitemap.xml`.
+
+### M.4  Create a Google Business Profile (free, ~10 min)
+1. https://www.google.com/business → **Manage now** → add "hiqanalytix" → pick category **"Business Management Consultant"**.
+2. Add the same `hello@hiqanalytix.com` and phone number that appear on your Contact section.
+3. Verify by postcard (only for the first business at your address) or by phone. This makes hiqanalytix appear on Google Maps and the local "consultancy near me" search results.
+
+### M.5  Build a few high-signal backlinks
+Priority actions that move the needle for a young consultancy site:
+- Publish the company **LinkedIn Company Page** and link it back to `hiqanalytix.com` (add the URL to `index.html`'s `sameAs` JSON-LD too).
+- Ask your first 3 clients for a short **case study permission** — publish them on the site (we already have a Case Studies section) and ask the client to share the URL from their own LinkedIn.
+- List hiqanalytix on **Clutch.co** and **G2** under "Power BI consulting firms" and "IT consulting firms".
+- If any team member is Microsoft-certified (PL-200/PL-300/PL-400/PL-500/PL-600), request inclusion in the **Microsoft Partner Directory** — that link is gold for SEO.
+
+### M.6  Bonus: turn on Google Analytics 4 (5 min)
+1. https://analytics.google.com → create a property for `hiqanalytix.com` → copy the `G-XXXXXXX` measurement ID.
+2. Paste this snippet inside the `<head>` of `frontend/public/index.html` (replace the id):
+   ```html
+   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
+   <script>
+     window.dataLayer = window.dataLayer || [];
+     function gtag(){dataLayer.push(arguments);}
+     gtag('js', new Date());
+     gtag('config', 'G-XXXXXXX');
+   </script>
+   ```
+3. Commit + push. GA4 will start tracking within an hour.
+
+### Expected timeline
+- **Day 1–2**: Google indexes the homepage. Search `site:hiqanalytix.com` — you should see 1+ result.
+- **Week 1–2**: All 8 sitemap URLs indexed.
+- **Month 1–3**: You start ranking for **long-tail queries** (e.g. `hiqanalytix power bi consulting`, `power bi consulting firm for automotive OEE`).
+- **Month 3–6**: Short-tail rankings begin (`power bi consultancy`, `automation consulting firm`) — this depends heavily on backlinks and content freshness. Post a case study or an insight article every 4–6 weeks to compound.
+
+---
+
+<a id="part-n"></a>
+## Part N — Common problems & fixes
 
 | Symptom | Fix |
 |---|---|

@@ -54,11 +54,11 @@ export default function About() {
                         A senior team of data engineers, dashboard designers and automation specialists.
                     </h2>
                     <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-800">
-                        We are a boutique technology services firm helping enterprise
-                        clients rebuild the way they measure, decide and operate. From
-                        finance close automation to plant-floor telemetry, our teams
-                        translate messy operational data into decisions leaders can act on
-                        the same day.
+                        We are a boutique consulting firm helping enterprise
+                        clients rebuild the way they measure, decide and operate. As a
+                        specialist Power BI and automation consultancy, we translate
+                        messy operational data into decisions leaders can act on the
+                        same day — from finance close automation to plant-floor telemetry.
                     </p>
 
                     <ul data-testid="about-bullets" className="mt-10 grid gap-4 sm:grid-cols-2">

@@ -31,9 +31,10 @@ export default function Footer() {
                             </span>
                         </div>
                         <p className="mt-6 max-w-md text-sm leading-relaxed text-neutral-600">
-                            An enterprise technology services partner delivering Microsoft
-                            Power Platform, Power BI dashboards and intelligent automation
-                            for regulated industries.
+                            hiqanalytix is a boutique enterprise consulting firm
+                            delivering Microsoft Power Platform, Power BI dashboards and
+                            intelligent automation for regulated industries — Financial,
+                            Automotive, Engineering, Energy and Health.
                         </p>
                         <p className="mt-6 font-display text-lg text-neutral-800">
                             Your trust is our responsibility.

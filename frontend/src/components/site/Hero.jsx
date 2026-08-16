@@ -44,9 +44,9 @@ export default function Hero() {
                         data-testid="hero-subheading"
                         className="mt-8 max-w-2xl text-lg leading-relaxed text-neutral-800 md:text-xl"
                     >
-                        hiqanalytix is a technology services partner delivering
+                        hiqanalytix is a boutique enterprise consulting firm delivering
                         Microsoft Power Platform, Power BI dashboards and intelligent
-                        automation for the world&apos;s most demanding industries.
+                        business automation for the world&apos;s most demanding industries.
                     </p>
 
                     <div className="mt-10 flex flex-wrap items-center gap-4">
