@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkle } from "@phosphor-icons/react";
-import HeroDashboardMock from "@/components/site/HeroDashboardMock";
+import HeroAutomationFlow from "@/components/site/HeroAutomationFlow";
 
 const rotators = [
     "Power BI dashboards",
@@ -172,9 +172,9 @@ export default function Hero() {
                     </div>
                 </motion.div>
 
-                {/* RIGHT — Animated Dashboard */}
+                {/* RIGHT — Animated Automation Flow */}
                 <div className="hidden lg:col-span-5 lg:flex lg:items-center lg:justify-end">
-                    <HeroDashboardMock />
+                    <HeroAutomationFlow />
                 </div>
             </div>
         </section>
