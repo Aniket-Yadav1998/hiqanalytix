@@ -276,6 +276,23 @@ We will convert the Internal URL to Spring Boot's JDBC format in Part I.
    - `DB_USERNAME` = `hiqdb_user`
    - `DB_PASSWORD` = `AbCdEf`
 
+### I.1  Turn on lead email notifications (Resend)
+Every submission from the Contact form and the ROI calculator can auto-email your sales inbox — this is already wired in the code. To turn it on:
+
+1. Sign up (free) at https://resend.com → **API Keys → Create API Key** → copy the value (starts with `re_...`).
+2. Verify your domain in Resend: **Domains → Add Domain** → type `hiqanalytix.com` → Resend shows 3 DNS records (SPF `TXT`, DKIM `TXT`, and a return-path `MX`). Add those in GoDaddy → **DNS**. Wait 15–30 min → click **Verify** in Resend. This lets you send emails **from** your own domain (e.g. `hello@hiqanalytix.com`) which greatly improves deliverability.
+3. In the Render dashboard for `hiqanalytix-api` (or the FastAPI service) add these environment variables:
+
+   | Key | Value |
+   |---|---|
+   | `RESEND_API_KEY` | `re_xxx…` from step 1 |
+   | `SENDER_EMAIL` | `hello@hiqanalytix.com` (or `onboarding@resend.dev` while you're still verifying) |
+   | `SALES_EMAIL` | The inbox that should receive every new lead, e.g. `sales@hiqanalytix.com` |
+
+4. Redeploy. Test by submitting the contact form on your live site — you should get a nicely formatted HTML email within 10 seconds.
+
+> Emails are **best-effort and non-blocking**. If Resend is down or `RESEND_API_KEY` is empty, the form still returns 201 immediately and the lead is safely in the database. Nothing is ever lost.
+
 4. Click **Create Web Service**. First deploy takes ~5 minutes.
 5. When status is **Live**, Render shows the API URL, e.g. `https://hiqanalytix-api.onrender.com`.
 6. Verify: open `https://hiqanalytix-api.onrender.com/api/health` → should return `{"status":"healthy"…}`.

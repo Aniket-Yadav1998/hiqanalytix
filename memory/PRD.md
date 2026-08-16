@@ -24,6 +24,14 @@ Build a premium enterprise-grade corporate website for **hiqanalytix**, a techno
 7. Footer with company info, nav, services, industries.
 8. Fully responsive; dark premium enterprise aesthetic; smooth scrolling.
 
+## What's been implemented — 2026-01 (iteration 5)
+- **Client Logos Strip** — new marquee strip directly under the hero ("Trusted by operators across five industries") with 10 tastefully-typed client tiles that pause on hover.
+- **Lead Email Notifications** — Resend integration wired into both `POST /api/contact` and `POST /api/roi-estimate` via FastAPI `BackgroundTasks` + `asyncio.to_thread`. Emails render as clean HTML with all lead fields + computed ROI numbers. **Best-effort, non-blocking**: if `RESEND_API_KEY` is unset (or the send fails), the API still returns 201 immediately and the lead is safe in the DB. Health endpoint now reports `email_configured` boolean.
+- **Insights Blog Section** — new `#insights` section titled "Field notes from the trenches." with 6 seeded posts. Backend adds `GET /api/insights` (list, sorted by published_at desc), `POST /api/insights` (validated create), and auto-seeds 6 posts on FastAPI startup (`_ensure_insights_seed`). Frontend fetches from the API with a graceful fallback list for cold-starts.
+- **OG Cover Image** — 1200×630 `og-cover.png` generated with Pillow, matching the site's brand (orange blobs + grid, brand mark, "Your trust is our responsibility." headline, `hiqanalytix.com` + industries strip). Referenced in `og:image` + `twitter:image` meta tags.
+- **Guide updated** — new sub-section **I.1** in `SETUP_GUIDE.md` walking the user through Resend signup, domain verification in GoDaddy DNS, and setting `RESEND_API_KEY`, `SENDER_EMAIL`, `SALES_EMAIL` env vars on Render.
+- Testing agent iteration 4: **100% backend (20 pytest cases), 100% frontend** — clients strip, insights section, OG image accessibility (200 image/png >30KB), JSON-LD schema, non-blocking email behaviour all verified.
+
 ## What's been implemented — 2026-01 (iteration 4)
 - **Domain locked to `hiqanalytix.com`** across meta tags, canonical URL, Open Graph, Twitter cards, JSON-LD schemas, sitemap.xml, robots.txt, footer copy, and setup guide.
 - **Enterprise-grade SEO** — SEO-optimized title (`hiqanalytix — Power BI & Automation Consulting Firm | Your trust is our responsibility`), keyword-rich meta description, long-tail keyword meta, Open Graph + Twitter card previews, canonical link, robots directives, Google/Bing indexability.

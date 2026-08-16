@@ -4,12 +4,14 @@ import { Toaster } from "sonner";
 import useSmoothScroll from "@/hooks/useSmoothScroll";
 import Navbar from "@/components/site/Navbar";
 import Hero from "@/components/site/Hero";
+import ClientsStrip from "@/components/site/ClientsStrip";
 import About from "@/components/site/About";
 import Services from "@/components/site/Services";
 import TechStack from "@/components/site/TechStack";
 import CaseStudies from "@/components/site/CaseStudies";
 import RoiCalculator from "@/components/site/RoiCalculator";
 import Industries from "@/components/site/Industries";
+import Insights from "@/components/site/Insights";
 import Contact from "@/components/site/Contact";
 import Footer from "@/components/site/Footer";
 
@@ -21,12 +23,14 @@ function App() {
             <Navbar />
             <main>
                 <Hero />
+                <ClientsStrip />
                 <About />
                 <Services />
                 <TechStack />
                 <CaseStudies />
                 <RoiCalculator />
                 <Industries />
+                <Insights />
                 <Contact />
             </main>
             <Footer />

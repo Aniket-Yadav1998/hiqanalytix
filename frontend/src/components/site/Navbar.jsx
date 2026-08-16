@@ -7,6 +7,7 @@ const links = [
     { href: "#case-studies", label: "Case Studies" },
     { href: "#roi", label: "ROI" },
     { href: "#industries", label: "Industries" },
+    { href: "#insights", label: "Insights" },
     { href: "#contact", label: "Contact" },
 ];
 
