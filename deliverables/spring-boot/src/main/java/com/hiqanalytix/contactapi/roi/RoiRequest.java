@@ -11,6 +11,8 @@ public class RoiRequest {
 
     @NotBlank
     @Email
+    @Size(max = 254)
+    @Pattern(regexp = "^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$", message = "Enter a valid business email address")
     private String email;
 
     @NotBlank

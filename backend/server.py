@@ -1,11 +1,13 @@
-from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 import re
 import asyncio
+import time
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
 from typing import List, Optional
@@ -44,13 +46,55 @@ app = FastAPI(title="hiqanalytix API")
 api_router = APIRouter(prefix="/api")
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Cache-Control"] = "no-store" if request.url.path.startswith("/api") else response.headers.get("Cache-Control", "public, max-age=3600")
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+_contact_rate_limit = {}
+_CONTACT_WINDOW_SECONDS = 300
+_CONTACT_MAX_REQUESTS = 3
+_MOBILE_DIGITS = {
+    "IN": {10}, "US": {10}, "CA": {10}, "GB": {10}, "DE": {10, 11},
+    "FR": {9}, "IT": {9, 10}, "ES": {9}, "NL": {9}, "BE": {9},
+    "CH": {9}, "AT": {10, 11}, "SE": {9}, "NO": {8}, "DK": {8},
+    "FI": {9, 10}, "IE": {9}, "PT": {9}, "PL": {9}, "CZ": {9},
+    "AU": {9}, "NZ": {8, 9}, "JP": {9, 10}, "SG": {8}, "AE": {9},
+    "SA": {9}, "ZA": {9},
+}
+_COUNTRY_DIALS = {
+    "IN": "91", "US": "1", "CA": "1", "GB": "44", "DE": "49", "FR": "33",
+    "IT": "39", "ES": "34", "NL": "31", "BE": "32", "CH": "41", "AT": "43",
+    "SE": "46", "NO": "47", "DK": "45", "FI": "358", "IE": "353", "PT": "351",
+    "PL": "48", "CZ": "420", "AU": "61", "NZ": "64", "JP": "81", "SG": "65",
+    "AE": "971", "SA": "966", "ZA": "27",
+}
+_EMAIL_PATTERN = re.compile(
+    r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+    r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$"
+)
+
+
 # ---------- Models ----------
 class ContactCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=120)
     email: EmailStr
+    country: Optional[str] = None
     phone: str = Field(..., min_length=6, max_length=32)
+    telephone: Optional[str] = Field(default=None, max_length=32)
     company: str = Field(..., min_length=2, max_length=160)
     message: str = Field(..., min_length=10, max_length=4000)
+    website: str = Field(default="", max_length=200)
+    form_started_at: Optional[int] = None
+    human_confirmed: bool = False
 
     @field_validator("name", "company", "message")
     @classmethod
@@ -60,12 +104,47 @@ class ContactCreate(BaseModel):
             raise ValueError("must not be blank")
         return v
 
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: EmailStr) -> str:
+        email = str(v).strip()
+        email_parts = email.split("@", 1)
+        local_part = email_parts[0] if email_parts else ""
+        domain_parts = email_parts[1].split(".") if len(email_parts) == 2 else []
+        if (
+            len(email) > 254
+            or not _EMAIL_PATTERN.fullmatch(email)
+            or ".." in email
+            or local_part.startswith(".")
+            or local_part.endswith(".")
+            or any(len(part) < 2 for part in domain_parts)
+        ):
+            raise ValueError("enter a valid business email address")
+        return email.lower()
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        if not re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ .'\-][A-Za-zÀ-ÖØ-öø-ÿ]+)*", v, re.UNICODE):
+            raise ValueError("name may contain letters, spaces, apostrophes, and hyphens only")
+        return v
+
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: str) -> str:
         v = v.strip()
-        if not re.match(r"^[\d\s+()\-]{6,32}$", v):
+        if not re.match(r"^[\d\s+()\-]{6,32}$", v) or len(re.sub(r"\D", "", v)) < 7:
             raise ValueError("invalid phone")
+        return v
+
+    @field_validator("telephone")
+    @classmethod
+    def validate_telephone(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or not v.strip():
+            return None
+        v = v.strip()
+        if not re.match(r"^[\d\s+()\-]{6,32}$", v):
+            raise ValueError("invalid telephone")
         return v
 
 
@@ -75,6 +154,7 @@ class Contact(BaseModel):
     name: str
     email: str
     phone: str
+    telephone: Optional[str] = None
     company: str
     message: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -88,6 +168,24 @@ class RoiCreate(BaseModel):
     current_manpower: int = Field(..., ge=1, le=100000)
     current_hours_per_week: int = Field(..., ge=1, le=10000)
     current_tools: str = Field(..., min_length=2, max_length=400)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: EmailStr) -> str:
+        email = str(v).strip()
+        email_parts = email.split("@", 1)
+        local_part = email_parts[0] if email_parts else ""
+        domain_parts = email_parts[1].split(".") if len(email_parts) == 2 else []
+        if (
+            len(email) > 254
+            or not _EMAIL_PATTERN.fullmatch(email)
+            or ".." in email
+            or local_part.startswith(".")
+            or local_part.endswith(".")
+            or any(len(part) < 2 for part in domain_parts)
+        ):
+            raise ValueError("enter a valid business email address")
+        return email.lower()
 
 
 class RoiLead(BaseModel):
@@ -210,7 +308,29 @@ async def health():
 
 
 @api_router.post("/contact", response_model=Contact, status_code=201)
-async def create_contact(payload: ContactCreate, background_tasks: BackgroundTasks):
+async def create_contact(payload: ContactCreate, background_tasks: BackgroundTasks, request: Request):
+    if not payload.human_confirmed:
+        raise HTTPException(status_code=400, detail="Please confirm that you are human")
+    if payload.country and payload.country in _MOBILE_DIGITS:
+        mobile_digits = re.sub(r"\D", "", payload.phone)
+        dial = _COUNTRY_DIALS[payload.country]
+        if mobile_digits.startswith(dial):
+            mobile_digits = mobile_digits[len(dial):]
+        if len(mobile_digits) not in _MOBILE_DIGITS[payload.country]:
+            raise HTTPException(status_code=422, detail="Enter a valid mobile number for the selected country")
+    if payload.website.strip():
+        raise HTTPException(status_code=400, detail="Unable to submit this form")
+    if payload.form_started_at and int(time.time() * 1000) - payload.form_started_at < 2500:
+        raise HTTPException(status_code=400, detail="Please take a moment to review your details")
+
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    recent = [stamp for stamp in _contact_rate_limit.get(client_ip, []) if now - stamp < _CONTACT_WINDOW_SECONDS]
+    if len(recent) >= _CONTACT_MAX_REQUESTS:
+        raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
+    recent.append(now)
+    _contact_rate_limit[client_ip] = recent
+
     contact = Contact(**payload.model_dump())
     doc = contact.model_dump()
     doc["created_at"] = doc["created_at"].isoformat()

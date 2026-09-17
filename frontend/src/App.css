@@ -1,6 +1,21 @@
-/* hiqanalytix — global app styles */
+/* HARVESTIQ LLP — global app styles */
 .App {
+    position: relative;
+    isolation: isolate;
     min-height: 100vh;
-    background-color: #FFFFFF;
+    background: transparent;
     color: #0B0B0F;
+}
+
+/* Let the page-wide gradient show through large section surfaces while
+   keeping cards and forms opaque for comfortable reading. */
+.App > main > section:not(#credentials),
+.App > footer {
+    background-color: rgba(255, 255, 255, 0.42) !important;
+    backdrop-filter: blur(2px);
+}
+
+.App > main > section:nth-of-type(even):not(#credentials),
+.App > footer {
+    background-color: rgba(239, 248, 240, 0.5) !important;
 }

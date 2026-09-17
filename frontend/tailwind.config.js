@@ -8,8 +8,11 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                display: ['Outfit', 'ui-sans-serif', 'system-ui'],
-                sans: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui'],
+                display: ['Arial', 'Helvetica', 'sans-serif'],
+                sans: ['Arial', 'Helvetica', 'sans-serif'],
+            },
+            screens: {
+                'nav-collapse': '1100px',
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -17,13 +20,29 @@ module.exports = {
                 sm: 'calc(var(--radius) - 4px)',
             },
             colors: {
+                orange: {
+                    50: '#E8F5E9',
+                    200: '#B7DDBA',
+                    300: '#8BC58F',
+                    400: '#68B06D',
+                    500: '#48A14D',
+                    600: '#1E5E29',
+                    700: '#1E5E29',
+                },
                 background: 'hsl(var(--background))',
                 foreground: 'hsl(var(--foreground))',
                 brand: {
-                    DEFAULT: '#0055FF',
-                    ink: '#0A0A0C',
-                    accent: '#10B981',
+                    DEFAULT: '#48A14D',   // Leaf Green (primary)
+                    dark: '#1E5E29',      // Deep Forest Green (hover/active)
+                    light: '#E8F5E9',     // Light Green Tint (backgrounds)
+                    navy: '#1B263B',      // Dark Charcoal Navy (text)
                 },
+                // --- OLD BRAND CONFIG (for 1-step revert) ---
+                // brand: {
+                //     DEFAULT: '#0055FF',
+                //     ink: '#0A0A0C',
+                //     accent: '#10B981',
+                // },
                 card: {
                     DEFAULT: 'hsl(var(--card))',
                     foreground: 'hsl(var(--card-foreground))',

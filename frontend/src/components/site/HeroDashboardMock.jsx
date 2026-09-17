@@ -32,7 +32,7 @@ export default function HeroDashboardMock() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.0, duration: 0.6 }}
-                className="absolute -right-4 top-40 z-20 border border-orange-200 bg-orange-500 px-3 py-2 text-white shadow-xl"
+                className="absolute -right-4 top-40 z-20 border border-brand-light bg-brand px-3 py-2 text-white shadow-xl"
             >
                 <div className="text-[10px] uppercase tracking-widest opacity-80">Automations</div>
                 <div className="mt-0.5 font-display text-xl font-bold">2,148 hrs</div>
@@ -62,9 +62,9 @@ export default function HeroDashboardMock() {
                     <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
                     <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
                     <div className="ml-3 flex-1 truncate text-[11px] text-neutral-500">
-                        hiqanalytix.com/dashboards/executive
+                        HARVESTIQ LLP / dashboards / executive
                     </div>
-                    <span className="border border-orange-200 bg-orange-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-orange-700">
+                    <span className="border border-brand-light bg-brand-light px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-brand-dark">
                         Live
                     </span>
                 </div>
@@ -108,7 +108,7 @@ export default function HeroDashboardMock() {
                                 <span className="h-2 w-2 bg-neutral-300" /> Before
                             </span>
                             <span className="inline-flex items-center gap-1 text-neutral-700">
-                                <span className="h-2 w-2 bg-orange-500" /> After
+                                <span className="h-2 w-2 bg-brand" /> After
                             </span>
                         </div>
                     </div>
@@ -126,7 +126,7 @@ export default function HeroDashboardMock() {
                                         initial={{ height: 0 }}
                                         animate={{ height: `${h}%` }}
                                         transition={{ delay: 0.8 + i * 0.05, duration: 0.7, ease: "easeOut" }}
-                                        className="w-1/2 bg-orange-500"
+                                        className="w-1/2 bg-brand"
                                     />
                                 </div>
                                 <span className="text-[9px] uppercase tracking-widest text-neutral-500">
@@ -150,8 +150,8 @@ export default function HeroDashboardMock() {
                     <svg viewBox="0 0 200 70" className="h-12 w-40">
                         <defs>
                             <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
-                                <stop offset="0%" stopColor="#F97316" stopOpacity="0.3" />
-                                <stop offset="100%" stopColor="#F97316" stopOpacity="0" />
+                                <stop offset="0%" stopColor="#48A14D" stopOpacity="0.3" />
+                                <stop offset="100%" stopColor="#48A14D" stopOpacity="0" />
                             </linearGradient>
                         </defs>
                         <motion.path
@@ -164,7 +164,7 @@ export default function HeroDashboardMock() {
                         <motion.path
                             d={spark}
                             fill="none"
-                            stroke="#F97316"
+                            stroke="#48A14D"
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -174,7 +174,7 @@ export default function HeroDashboardMock() {
                         />
                         <motion.circle
                             cx="200" cy="18" r="4"
-                            fill="#F97316"
+                            fill="#48A14D"
                             initial={{ opacity: 0, scale: 0 }}
                             animate={{ opacity: 1, scale: [0, 1.4, 1] }}
                             transition={{ delay: 2.1, duration: 0.6 }}

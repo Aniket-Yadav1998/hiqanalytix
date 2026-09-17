@@ -87,3 +87,9 @@ credentials.json
 *.key
 .credentials
 frontend/node_modules/.cache/default-development/0.pack
+
+# Local generated/runtime files
+frontend/server.log
+deliverables/spring-boot/target/
+deliverables/spring-boot/data/
+form.html

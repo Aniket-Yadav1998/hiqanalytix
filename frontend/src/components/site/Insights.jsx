@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Clock, Plus } from "@phosphor-icons/react";
+import { ArrowUpRight, Clock, Plus, X } from "@phosphor-icons/react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const INITIAL = 5;
@@ -16,6 +16,7 @@ const FALLBACK = [
         read_minutes: 6,
         image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
         published_at: "2026-01-05T00:00:00Z",
+        content: "Enterprise Power BI programmes rarely fail because of the visual layer. They fail when governance, ownership and adoption are treated as follow-up tasks rather than core design decisions.\n\nThe most common warning signs are dataset sprawl, inconsistent definitions and dashboards that are measured by delivery volume instead of business usage. A sustainable programme establishes a governed semantic model, clear ownership and adoption measures from the first release.\n\nThe practical lesson is straightforward: treat Power BI as an operating capability, not a collection of reports. That shift protects trust in the numbers and keeps the programme valuable beyond its second year.",
     },
     {
         id: "f2",
@@ -25,6 +26,7 @@ const FALLBACK = [
         read_minutes: 8,
         image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
         published_at: "2025-12-18T00:00:00Z",
+        content: "Selecting an automation platform should begin with the process, not the product name. Power Automate is effective for connected workflows, RPA is appropriate for legacy interfaces, and Copilot Studio is suited to guided conversational experiences.\n\nThe right decision depends on process volatility, system accessibility, control requirements and the level of human oversight required. A structured inventory makes those trade-offs visible before implementation begins.\n\nThe strongest enterprise programmes combine these capabilities under one governance model, with clear ownership, monitoring and measurable outcomes.",
     },
     {
         id: "f3",
@@ -34,6 +36,7 @@ const FALLBACK = [
         read_minutes: 5,
         image_url: "https://images.unsplash.com/photo-1565043666747-69f6646db940?auto=format&fit=crop&w=1200&q=80",
         published_at: "2025-11-30T00:00:00Z",
+        content: "An OEE dashboard succeeds when it helps a plant manager make a decision during a live shift. That requires a small number of trusted measures, clear exception states and a visual hierarchy designed for rapid interpretation.\n\nThe most effective implementations connect production, quality and downtime data in a governed model. They avoid decorative complexity and focus attention on the constraints that operators can act on immediately.\n\nAdoption is the final measure of quality. A technically accurate dashboard that is not used on the shop floor has not solved the operational problem.",
     },
     {
         id: "f4",
@@ -43,6 +46,7 @@ const FALLBACK = [
         read_minutes: 7,
         image_url: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=1200&q=80",
         published_at: "2025-10-30T00:00:00Z",
+        content: "A faster month-end close is usually the result of removing manual hand-offs rather than asking teams to work longer hours. A governed Power BI model, combined with Power Automate approvals and exception handling, can bring fragmented workbooks into one controlled process.\n\nThe implementation should begin with reconciliation points, ownership and a clear definition of completion. Automation is then applied to repeatable activities while judgement-heavy decisions remain visible to the appropriate reviewers.\n\nThe outcome is not only a shorter close. It is a more reliable management view and a process that can be audited, improved and scaled.",
     },
     {
         id: "f5",
@@ -52,6 +56,7 @@ const FALLBACK = [
         read_minutes: 6,
         image_url: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=1200&q=80",
         published_at: "2025-09-30T00:00:00Z",
+        content: "Renewables operators gain value when asset data moves from retrospective reporting to active triage. The key is to combine telemetry, operational context and workflow ownership in one view.\n\nA Fabric-backed model can surface the patterns that matter: repeated alarms, performance drift and unresolved maintenance actions. Those signals become useful only when they are connected to a defined response process.\n\nThe result is a more disciplined operating rhythm, with teams spending less time assembling reports and more time resolving the conditions that affect asset performance.",
     },
 ];
 
@@ -65,7 +70,7 @@ function formatDate(iso) {
     }
 }
 
-function InsightCard({ p, i }) {
+function InsightCard({ p, i, onRead }) {
     return (
         <motion.article
             data-testid={`insight-card-${p.id}`}
@@ -84,12 +89,12 @@ function InsightCard({ p, i }) {
                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         onError={(e) => {
                             e.currentTarget.style.display = "none";
-                            e.currentTarget.parentElement.classList.add("bg-orange-50");
+                            e.currentTarget.parentElement.classList.add("bg-brand-light");
                         }}
                     />
                 ) : (
-                    <div className="grid h-full w-full place-items-center bg-orange-50 text-orange-500">
-                        <span className="font-display text-2xl font-bold">hq</span>
+                    <div className="grid h-full w-full place-items-center bg-brand-light">
+                        <img src="/logo.jpeg" alt="HARVESTIQ LLP" className="h-16 w-auto object-contain" />
                     </div>
                 )}
                 <span className="absolute left-3 top-3 border border-orange-200 bg-white/95 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-700 backdrop-blur-sm">
@@ -115,12 +120,16 @@ function InsightCard({ p, i }) {
                 </div>
                 <div className="mt-5 flex items-center justify-between border-t border-neutral-100 pt-4">
                     <span className="text-xs uppercase tracking-widest text-neutral-500">
-                        hiqanalytix insights
+                        HARVESTIQ LLP insights
                     </span>
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 transition-transform duration-200 group-hover:translate-x-0.5">
+                    <button
+                        type="button"
+                        onClick={() => onRead(p)}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 transition-transform duration-200 group-hover:translate-x-0.5"
+                    >
                         Read note
                         <ArrowUpRight size={16} weight="bold" />
-                    </span>
+                    </button>
                 </div>
             </div>
         </motion.article>
@@ -131,6 +140,15 @@ export default function Insights() {
     const [posts, setPosts] = useState([]);
     const [visible, setVisible] = useState(INITIAL);
     const [loading, setLoading] = useState(true);
+    const [selectedPost, setSelectedPost] = useState(null);
+
+    useEffect(() => {
+        const onKeyDown = (event) => {
+            if (event.key === "Escape") setSelectedPost(null);
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, []);
 
     useEffect(() => {
         let mounted = true;
@@ -231,7 +249,7 @@ export default function Insights() {
                             className="flex flex-col gap-5"
                         >
                             {shown.map((p, i) => (
-                                <InsightCard key={p.id} p={p} i={i} />
+                                <InsightCard key={p.id} p={p} i={i} onRead={setSelectedPost} />
                             ))}
                         </div>
 
@@ -259,6 +277,52 @@ export default function Insights() {
                     </div>
                 </div>
             </div>
+            {selectedPost && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-950/60 px-4 py-8 backdrop-blur-sm"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={selectedPost.title}
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) setSelectedPost(null);
+                    }}
+                >
+                    <article className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto border border-neutral-200 bg-white shadow-2xl">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedPost(null)}
+                            aria-label="Close article"
+                            className="absolute right-5 top-5 grid h-9 w-9 place-items-center border border-neutral-200 text-neutral-600 transition-colors hover:border-brand hover:text-brand-dark"
+                        >
+                            <X size={18} weight="bold" />
+                        </button>
+                        {selectedPost.image_url && (
+                            <img
+                                src={selectedPost.image_url}
+                                alt=""
+                                className="h-48 w-full object-cover md:h-64"
+                            />
+                        )}
+                        <div className="p-7 md:p-10">
+                            <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.18em] text-brand-dark">
+                                <span>{selectedPost.category}</span>
+                                <span className="h-1 w-1 rounded-full bg-brand" />
+                                <span>{formatDate(selectedPost.published_at)}</span>
+                                <span className="h-1 w-1 rounded-full bg-brand" />
+                                <span>{selectedPost.read_minutes} min read</span>
+                            </div>
+                            <h3 className="mt-5 pr-8 font-display text-3xl font-bold leading-tight text-neutral-900 md:text-4xl">
+                                {selectedPost.title}
+                            </h3>
+                            <div className="mt-7 space-y-5 text-base leading-8 text-neutral-700">
+                                {(selectedPost.content || selectedPost.excerpt).split(/\n\n+/).map((paragraph, index) => (
+                                    <p key={`${selectedPost.id}-paragraph-${index}`}>{paragraph}</p>
+                                ))}
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            )}
         </section>
     );
 }

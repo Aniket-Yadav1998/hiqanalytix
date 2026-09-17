@@ -9,6 +9,7 @@ import useCountUp from "@/hooks/useCountUp";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const industries = ["Financial", "Automotive", "Engineering", "Energy", "Health"];
+const emailPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
 
 const initial = {
     name: "",
@@ -23,7 +24,21 @@ const initial = {
 function validate(f) {
     const errors = {};
     if (!f.name.trim() || f.name.trim().length < 2) errors.name = "Please enter your name";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) errors.email = "Enter a valid email";
+    const email = f.email.trim();
+    const emailParts = email.split("@");
+    const emailLocal = emailParts[0] || "";
+    const emailDomain = emailParts[1] || "";
+    if (
+        !emailPattern.test(email) ||
+        email.length > 254 ||
+        email.includes("..") ||
+        emailLocal.startsWith(".") ||
+        emailLocal.endsWith(".") ||
+        emailDomain.endsWith(".") ||
+        emailDomain.split(".").some((part) => part.length < 2)
+    ) {
+        errors.email = "Enter a valid business email address";
+    }
     if (!f.company.trim() || f.company.trim().length < 2) errors.company = "Company is required";
     if (!industries.includes(f.industry)) errors.industry = "Pick an industry";
     const mp = Number(f.current_manpower);
@@ -35,7 +50,7 @@ function validate(f) {
     return errors;
 }
 
-const ORANGE = "#F97316";
+const ORANGE = "#48A14D";
 const INK = "#0B0B0F";
 const MUTED = "#E5E5E5";
 
@@ -114,7 +129,7 @@ export default function RoiCalculator() {
                         <p className="mt-6 max-w-xl text-lg leading-relaxed text-neutral-800">
                             Tell us how you run analytics &amp; operations today. In 5
                             seconds we&apos;ll show you a conservative estimate of the
-                            time, headcount and cost you could reclaim with hiqanalytix.
+                            time, headcount and cost you could reclaim with HARVESTIQ LLP.
                         </p>
                     </div>
 
@@ -262,7 +277,7 @@ function RoiResult({ r }) {
                     <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
                     <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
                     <div className="ml-3 flex-1 truncate text-[11px] text-neutral-500">
-                        hiqanalytix.com/roi/{r.company.toLowerCase().replace(/\s+/g, "-")}
+                        HARVESTIQ LLP / ROI / {r.company.toLowerCase().replace(/\s+/g, "-")}
                     </div>
                     <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-700">
                         <ChartLineUp size={12} weight="bold" /> Live projection
@@ -365,8 +380,8 @@ function RoiResult({ r }) {
                         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
                             <defs>
                                 <linearGradient id="roi-grad" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stopColor="#F97316" stopOpacity="0.35" />
-                                    <stop offset="100%" stopColor="#F97316" stopOpacity="0" />
+                                    <stop offset="0%" stopColor="#48A14D" stopOpacity="0.35" />
+                                    <stop offset="100%" stopColor="#48A14D" stopOpacity="0" />
                                 </linearGradient>
                             </defs>
                             {/* horizontal gridlines */}
@@ -387,14 +402,14 @@ function RoiResult({ r }) {
                                 transition={{ delay: 0.3, duration: 1.6, ease: "easeOut" }}
                                 points={points}
                                 fill="none"
-                                stroke="#F97316"
+                                stroke="#48A14D"
                                 strokeWidth="0.8"
                                 vectorEffect="non-scaling-stroke"
                             />
                             {/* endpoint dot */}
                             <motion.circle
                                 cx="100" cy={100 - (curve[curve.length - 1] / maxCurve) * 100} r="1.2"
-                                fill="#F97316"
+                                fill="#48A14D"
                                 initial={{ scale: 0 }}
                                 animate={{ scale: [0, 2.2, 1] }}
                                 transition={{ delay: 1.9, duration: 0.6 }}

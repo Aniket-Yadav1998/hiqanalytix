@@ -29,7 +29,7 @@ export default function About() {
                     <div className="relative">
                         <img
                             src={aboutImg}
-                            alt="hiqanalytix consulting team collaborating"
+                            alt="HARVESTIQ LLP consulting team collaborating"
                             className="w-full border border-neutral-200 object-cover"
                             loading="lazy"
                         />
@@ -48,7 +48,7 @@ export default function About() {
                     className="lg:col-span-7"
                 >
                     <span data-testid="about-eyebrow" className="text-xs uppercase tracking-[0.25em] text-orange-600">
-                        About hiqanalytix
+                        About HARVESTIQ LLP
                     </span>
                     <h2 data-testid="about-heading" className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
                         A senior team of data engineers, dashboard designers and automation specialists.

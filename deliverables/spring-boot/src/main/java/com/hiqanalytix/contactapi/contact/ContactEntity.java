@@ -21,6 +21,9 @@ public class ContactEntity {
     @Column(nullable = false, length = 32)
     private String phone;
 
+    @Column(length = 32)
+    private String telephone;
+
     @Column(nullable = false, length = 160)
     private String company;
 
@@ -45,6 +48,8 @@ public class ContactEntity {
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
     public String getCompany() { return company; }
     public void setCompany(String company) { this.company = company; }
     public String getMessage() { return message; }

@@ -159,7 +159,7 @@ You will meet the database directly in a friendly web UI in the next step (H2 Co
    ```
 7. Verify it responds. Open a new terminal:
    ```bash
-   curl http://localhost:8080/api/health
+   curl
    # {"status":"healthy","service":"hiqanalytix-api"}
    ```
 
@@ -198,7 +198,7 @@ You will meet the database directly in a friendly web UI in the next step (H2 Co
 > # (optional) open and edit
 > nano .env
 > ```
-
+http://localhost:8080/api/health
 Open a **new** terminal (keep the Java one running).
 
 ```bash

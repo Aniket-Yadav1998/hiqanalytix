@@ -104,7 +104,7 @@ export default function TechStack() {
                 <div
                     data-testid="stack-scrollable"
                     className="overflow-x-auto pb-3"
-                    style={{ scrollbarColor: "#F97316 #F3F3F3" }}
+                    style={{ scrollbarColor: "#48A14D #F3F3F3" }}
                 >
                     <div className="flex min-w-max gap-3">
                         {tools.map((t) => (

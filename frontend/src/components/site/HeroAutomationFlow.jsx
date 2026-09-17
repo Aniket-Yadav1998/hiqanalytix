@@ -22,7 +22,7 @@ const sources = [
 const outputs = [
     { icon: ChartBar, label: "Power BI", sub: "executive KPIs", tone: "#F2C811" },
     { icon: ChatCircleText, label: "Teams alert", sub: "shift leads", tone: "#4B53BC" },
-    { icon: EnvelopeSimple, label: "Email digest", sub: "board pack", tone: "#F97316" },
+    { icon: EnvelopeSimple, label: "Email digest", sub: "board pack", tone: "#48A14D" },
 ];
 
 // Node component
@@ -51,7 +51,7 @@ function Node({ icon: Icon, label, sub, tone, testid, delay = 0 }) {
     );
 }
 
-// Central hub node (bigger, orange)
+// Central hub node (bigger, brand green)
 function Hub({ icon: Icon, label, sub, delay = 0 }) {
     return (
         <motion.div
@@ -60,9 +60,9 @@ function Hub({ icon: Icon, label, sub, delay = 0 }) {
             transition={{ duration: 0.6, delay }}
             className="relative"
         >
-            <div className="relative border border-orange-200 bg-white p-3 shadow-xl">
+            <div className="relative border border-brand-light bg-white p-3 shadow-xl">
                 <div className="flex items-center gap-3">
-                    <div className="grid h-11 w-11 place-items-center bg-orange-500 text-white">
+                    <div className="grid h-11 w-11 place-items-center bg-brand text-white">
                         <Icon size={22} weight="duotone" />
                     </div>
                     <div>
@@ -74,7 +74,7 @@ function Hub({ icon: Icon, label, sub, delay = 0 }) {
                 </div>
                 {/* pulsing halo */}
                 <motion.span
-                    className="pointer-events-none absolute inset-0 border-2 border-orange-400"
+                    className="pointer-events-none absolute inset-0 border-2 border-brand"
                     animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.15, 1] }}
                     transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                 />
@@ -112,13 +112,13 @@ export default function HeroAutomationFlow() {
             >
                 <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-neutral-900">
                     <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-70" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
                     </span>
                     Live automation flow
                 </div>
-                <div className="text-[10px] uppercase tracking-widest text-neutral-500">
-                    hiqanalytix.com / orchestration
+                <div className="text-[10px] uppercase tracking-widest text-neutral-700">
+                    HARVESTIQ LLP / orchestration
                 </div>
             </motion.div>
 
@@ -129,7 +129,7 @@ export default function HeroAutomationFlow() {
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
                         Sources
                     </span>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-orange-600">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-brand">
                         Orchestration
                     </span>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
@@ -149,10 +149,10 @@ export default function HeroAutomationFlow() {
                         <defs>
                             <linearGradient id="line-in" x1="0" x2="1">
                                 <stop offset="0%" stopColor="#D4D4D4" />
-                                <stop offset="100%" stopColor="#F97316" />
+                                <stop offset="100%" stopColor="#48A14D" />
                             </linearGradient>
                             <linearGradient id="line-out" x1="0" x2="1">
-                                <stop offset="0%" stopColor="#F97316" />
+                                <stop offset="0%" stopColor="#48A14D" />
                                 <stop offset="100%" stopColor="#D4D4D4" />
                             </linearGradient>
                         </defs>
@@ -197,7 +197,7 @@ export default function HeroAutomationFlow() {
 
                         {/* Travelling packets — each is a circle following a <animateMotion> path */}
                         {leftPaths.map((d, i) => (
-                            <circle key={`p-in-${i}`} r="3.4" fill="#F97316">
+                            <circle key={`p-in-${i}`} r="3.4" fill="#48A14D">
                                 <animateMotion
                                     dur={`${2.4 + i * 0.4}s`}
                                     repeatCount="indefinite"
@@ -218,7 +218,7 @@ export default function HeroAutomationFlow() {
                             </circle>
                         ))}
                         {rightPaths.map((d, i) => (
-                            <circle key={`p-out-${i}`} r="3.4" fill="#F97316">
+                            <circle key={`p-out-${i}`} r="3.4" fill="#48A14D">
                                 <animateMotion
                                     dur={`${2.6 + i * 0.4}s`}
                                     repeatCount="indefinite"
@@ -232,7 +232,7 @@ export default function HeroAutomationFlow() {
                                     attributeName="opacity"
                                     values="0;1;1;0"
                                     keyTimes="0;0.1;0.9;1"
-                                    dur={`${2.6 + i * 0.4}s`}
+                                    dur={` ${2.6 + i * 0.4}s`}
                                     repeatCount="indefinite"
                                     begin={`${3.0 + i * 0.6}s`}
                                 />

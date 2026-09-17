@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Stack, ChartBar, Robot, ArrowUpRight } from "@phosphor-icons/react";
+import { Stack, ChartBar, Robot, Brain, ArrowUpRight } from "@phosphor-icons/react";
 
 const services = [
     {
@@ -24,11 +24,29 @@ const services = [
     {
         key: "automations",
         icon: Robot,
-        title: "Automations",
-        tagline: "RPA + workflow orchestration",
-        body: "Power Automate, desktop RPA and cross-system orchestration that replace repetitive operational work — measured in hours reclaimed, not scripts shipped.",
-        bullets: ["Power Automate flows", "Desktop RPA (attended / unattended)", "System integration & APIs"],
+        title: "Business Automation",
+        tagline: "Workflow orchestration across the enterprise",
+        body: "Power Automate, workflow orchestration and system integration that reduce repetitive work, improve process visibility and connect the tools your teams rely on.",
+        bullets: ["Power Automate workflows", "System integration and APIs", "Process governance and monitoring"],
         span: "md:col-span-12 lg:col-span-12",
+    },
+    {
+        key: "rpa",
+        icon: Robot,
+        title: "RPA",
+        tagline: "Reliable automation for critical operations",
+        body: "Attended and unattended robotic process automation that improves execution quality, reduces manual effort and integrates with the systems your teams already use.",
+        bullets: ["Attended and unattended automation", "Process discovery and optimisation", "Enterprise controls and monitoring"],
+        span: "md:col-span-6 lg:col-span-6",
+    },
+    {
+        key: "agentic-ai",
+        icon: Brain,
+        title: "Agentic AI",
+        tagline: "Intelligent systems that act with purpose",
+        body: "Practical AI agents designed to interpret information, make governed decisions and complete multi-step business workflows with appropriate human oversight.",
+        bullets: ["AI agent strategy and design", "Knowledge and workflow orchestration", "Governance, evaluation and oversight"],
+        span: "md:col-span-6 lg:col-span-6",
     },
 ];
 
@@ -46,7 +64,7 @@ export default function Services() {
                             What we do
                         </span>
                         <h2 data-testid="services-heading" className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
-                            Three practices.
+                            Five practices.
                             <br />
                             One outcome.
                         </h2>
