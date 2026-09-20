@@ -19,9 +19,16 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
         response.setHeader("X-Content-Type-Options", "nosniff");
-        response.setHeader("X-Frame-Options", "DENY");
+        if (request.getRequestURI().startsWith("/h2-console")) {
+            response.setHeader("X-Frame-Options", "SAMEORIGIN");
+        } else {
+            response.setHeader("X-Frame-Options", "DENY");
+        }
         response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
         response.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+        if (request.isSecure()) {
+            response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+        }
         if (request.getRequestURI().startsWith("/api")) {
             response.setHeader("Cache-Control", "no-store");
         }

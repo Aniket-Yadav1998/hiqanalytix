@@ -93,3 +93,6 @@ frontend/server.log
 deliverables/spring-boot/target/
 deliverables/spring-boot/data/
 form.html
+
+# Public frontend production configuration (contains no secrets)
+!frontend/.env.production

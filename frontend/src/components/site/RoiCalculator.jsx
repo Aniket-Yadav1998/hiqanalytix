@@ -5,10 +5,11 @@ import { toast } from "sonner";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import { Calculator, TrendDown, UsersThree, Clock, ChartLineUp, Lightning } from "@phosphor-icons/react";
 import useCountUp from "@/hooks/useCountUp";
+import { Button } from "@/components/ui/button";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const industries = ["Financial", "Automotive", "Engineering", "Energy", "Health"];
+const industries = ["Financial", "Automotive", "Engineering", "Energy", "Health", "Other"];
 const emailPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
 
 const initial = {
@@ -44,7 +45,7 @@ function validate(f) {
     const mp = Number(f.current_manpower);
     if (!Number.isFinite(mp) || mp < 1) errors.current_manpower = "How many people today? (min 1)";
     const hr = Number(f.current_hours_per_week);
-    if (!Number.isFinite(hr) || hr < 1) errors.current_hours_per_week = "Total team hours / week?";
+    if (!Number.isFinite(hr) || hr < 1) errors.current_hours_per_week = "Enter total hours per person each week";
     if (!f.current_tools.trim() || f.current_tools.trim().length < 2)
         errors.current_tools = "List the main tools you use today";
     return errors;
@@ -59,6 +60,7 @@ export default function RoiCalculator() {
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState(null);
+    const formIsValid = Object.keys(validate(form)).length === 0;
 
     const onChange = (e) => {
         const { name, value } = e.target;
@@ -171,13 +173,13 @@ export default function RoiCalculator() {
                                 {errors.current_manpower && <span className="mt-2 block text-xs text-red-500">{errors.current_manpower}</span>}
                             </label>
                             <label className="block">
-                                <span className={labelCls}>Team hours / week</span>
+                                <span className={labelCls}>Hours/week/person</span>
                                 <input type="number" min="1" name="current_hours_per_week" value={form.current_hours_per_week} onChange={onChange} placeholder="e.g. 220" className={inputCls("current_hours_per_week")} data-testid="roi-input-hours" />
                                 {errors.current_hours_per_week && <span className="mt-2 block text-xs text-red-500">{errors.current_hours_per_week}</span>}
                             </label>
                         </div>
                         <label className="mt-5 block">
-                            <span className={labelCls}>Technology you use today</span>
+                            <span className={labelCls}>Technologies you use today</span>
                             <input name="current_tools" value={form.current_tools} onChange={onChange} placeholder="e.g. Excel, SAP exports, Tableau, manual RPA scripts…" className={inputCls("current_tools")} data-testid="roi-input-tools" />
                             {errors.current_tools && <span className="mt-2 block text-xs text-red-500">{errors.current_tools}</span>}
                         </label>
@@ -186,15 +188,17 @@ export default function RoiCalculator() {
                             <p className="text-xs text-neutral-700">
                                 We save every submission securely. You&apos;ll only be contacted about this enquiry.
                             </p>
-                            <button
+                            <Button
                                 type="submit"
-                                disabled={submitting}
+                                variant="accent"
+                                size="xl"
+                                disabled={submitting || !formIsValid}
                                 data-testid="roi-submit-btn"
-                                className="inline-flex items-center gap-2 bg-orange-500 px-6 py-3.5 font-medium text-white transition-colors duration-200 hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="w-full md:w-auto"
                             >
-                                {submitting ? "Calculating…" : "Show my savings"}
+                                {submitting ? "Calculating…" : "Show estimated savings"}
                                 <Calculator size={18} weight="bold" />
-                            </button>
+                            </Button>
                         </div>
                     </motion.form>
                 </div>
@@ -255,12 +259,12 @@ function RoiResult({ r }) {
                     <p className="mt-2 text-sm text-neutral-800">
                         Industry: <span className="font-semibold text-neutral-900">{r.industry}</span>
                         &nbsp;·&nbsp; Baseline: {r.current_manpower} people ·{" "}
-                        {r.current_hours_per_week} hrs / week ·{" "}
+                        {r.current_hours_per_week} hours/week/person ·{" "}
                         <span className="italic">{r.current_tools}</span>
                     </p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                <span className="inline-flex items-center gap-1.5 border border-brand-light bg-brand-light px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-brand-dark">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
                     Saved · Sales notified
                 </span>
             </div>
@@ -279,7 +283,7 @@ function RoiResult({ r }) {
                     <div className="ml-3 flex-1 truncate text-[11px] text-neutral-500">
                         HARVESTIQ LLP / ROI / {r.company.toLowerCase().replace(/\s+/g, "-")}
                     </div>
-                    <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-700">
+                    <span className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-brand-dark">
                         <ChartLineUp size={12} weight="bold" /> Live projection
                     </span>
                 </div>
@@ -428,12 +432,12 @@ function RoiResult({ r }) {
 
             {/* Original pie chart trio kept for depth */}
             <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-                <StatCard icon={TrendDown} title="Cost saving" value={`${r.money_savings_pct}%`}
-                          subtitle="of what you spend today" data={savingsData} testid="roi-chart-cost" />
+                <StatCard icon={TrendDown} title="Estimated savings" value={`${r.money_savings_pct}%`}
+                          subtitle="of current spend" data={savingsData} testid="roi-chart-cost" />
                 <StatCard icon={UsersThree} title="Less manpower" value={`${r.manpower_reduction_pct}%`}
                           subtitle={`down to ~${r.projected_manpower} people`} data={manpowerData} testid="roi-chart-manpower" />
                 <StatCard icon={Clock} title="Faster execution" value={`${r.time_reduction_pct}%`}
-                          subtitle={`~${r.projected_hours_per_week} hrs / wk after`} data={timeData} testid="roi-chart-time" />
+                          subtitle={`~${r.projected_hours_per_week} hours/week/person after`} data={timeData} testid="roi-chart-time" />
             </div>
 
             <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 pt-6">

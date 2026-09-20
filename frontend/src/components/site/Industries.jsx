@@ -86,7 +86,7 @@ export default function Industries() {
                                 />
                                 {/* Bottom gradient only — image stays fully visible */}
                                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                                <span className="absolute right-4 top-4 border border-white/40 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-widest text-white backdrop-blur-sm">
+                                <span className="absolute right-4 top-4 border border-white/40 bg-black/40 px-2 py-1 text-xs uppercase tracking-widest text-white backdrop-blur-sm">
                                     0{i + 1}
                                 </span>
                             </div>

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ContactRequest {
 
@@ -24,7 +25,7 @@ public class ContactRequest {
     @Pattern(regexp = "^[\\d\\s+()\\-]{6,32}$", message = "Enter a valid phone number")
     private String phone;
 
-    @Pattern(regexp = "^[\\d\\s+()\\-]{6,32}$", message = "Enter a valid telephone number")
+    @Pattern(regexp = "^$|^[\\d\\s+()\\-]{6,32}$", message = "Enter a valid telephone number")
     private String telephone;
 
     @NotBlank(message = "Company is required")
@@ -32,12 +33,33 @@ public class ContactRequest {
     private String company;
 
     @NotBlank(message = "Message is required")
-    @Size(min = 10, max = 4000)
+    @Size(min = 10, max = 500)
     private String message;
 
     private String website;
     private Long formStartedAt;
     private boolean humanConfirmed;
+
+    @JsonProperty("follow_up")
+    private String followUp;
+
+    @JsonProperty("deal_status")
+    private String dealStatus;
+
+    @JsonProperty("next_followup")
+    private java.time.LocalDate nextFollowup;
+
+    @JsonProperty("acquisition_source")
+    private String acquisitionSource;
+
+    public String getFollowUp() { return followUp; }
+    public void setFollowUp(String followUp) { this.followUp = followUp; }
+    public String getDealStatus() { return dealStatus; }
+    public void setDealStatus(String dealStatus) { this.dealStatus = dealStatus; }
+    public java.time.LocalDate getNextFollowup() { return nextFollowup; }
+    public void setNextFollowup(java.time.LocalDate nextFollowup) { this.nextFollowup = nextFollowup; }
+    public String getAcquisitionSource() { return acquisitionSource; }
+    public void setAcquisitionSource(String acquisitionSource) { this.acquisitionSource = acquisitionSource; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

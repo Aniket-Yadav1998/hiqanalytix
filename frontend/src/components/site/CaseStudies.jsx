@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { TrendUp, Clock, PiggyBank, ChartLineUp } from "@phosphor-icons/react";
+import { TrendUp, Clock, PiggyBank, ChartLineUp, ArrowUpRight } from "@phosphor-icons/react";
 
 /*
  * Case Studies — hard numbers from Power BI & RPA engagements across 5 industries.
@@ -73,26 +73,29 @@ export default function CaseStudies() {
             className="relative border-t border-neutral-100 bg-white py-24 md:py-32"
         >
             <div className="mx-auto max-w-7xl px-6 lg:px-10">
-                <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
-                    <div className="lg:col-span-6">
-                        <span className="text-xs uppercase tracking-[0.25em] text-orange-600">
-                            Case studies
-                        </span>
-                        <h2
-                            data-testid="case-studies-heading"
-                            className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl lg:text-6xl"
-                        >
-                            Hard numbers.
-                            <br />
-                            Not slideware.
-                        </h2>
+<div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
+                        <div className="lg:col-span-12">
+                            <div className="flex flex-col lg:flex-row lg:items-baseline lg:justify-between gap-6">
+                                <div className="flex flex-col">
+                                    <span className="text-xs uppercase tracking-[0.25em] text-orange-600">
+                                        Case studies
+                                    </span>
+                                    <h2
+                                        data-testid="case-studies-heading"
+                                        className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl lg:text-6xl"
+                                    >
+                                        <span className="inline-block">Hard numbers.</span>
+                                        <span className="block">Not slideware.</span>
+                                    </h2>
+                                </div>
+                                <p className="max-w-2xl text-left text-lg leading-relaxed text-neutral-900 lg:pt-0 lg:mt-6">
+                                    Every engagement is measured against a baseline agreed at the
+                                    outset. Here is a sample of what our Power BI dashboards and RPA
+                                    automations have delivered across five industries.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <p className="max-w-2xl text-lg leading-relaxed text-neutral-800 lg:col-span-6 lg:pt-4">
-                        Every engagement is measured against a baseline agreed on day one.
-                        Here is a sample of what our Power BI dashboards and RPA
-                        automations have delivered across five industries.
-                    </p>
-                </div>
 
                 <div className="mt-16 grid grid-cols-1 gap-5 md:grid-cols-2">
                     {cases.map((c, idx) => (
@@ -127,7 +130,7 @@ export default function CaseStudies() {
                                         <div key={m.label} className="min-w-0">
                                             <div className="flex items-center gap-2 text-orange-500">
                                                 <Icon weight="duotone" size={18} />
-                                                <span className="truncate text-[10px] uppercase tracking-widest text-neutral-500">
+                                                <span className="truncate text-xs uppercase tracking-widest text-neutral-500">
                                                     {m.label}
                                                 </span>
                                             </div>
@@ -146,11 +149,21 @@ export default function CaseStudies() {
                                 {c.stack.map((s) => (
                                     <span
                                         key={s}
-                                        className="border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] text-neutral-700"
+                                        className="border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs text-neutral-700"
                                     >
                                         {s}
                                     </span>
                                 ))}
+                            </div>
+                            <div className="mt-6 pt-6 border-t border-neutral-100">
+                                <a
+                                    href="#contact"
+                                    className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-700 transition-colors"
+                                    aria-label={`View ${c.industry} case study for ${c.client}`}
+                                >
+                                    View case
+                                    <ArrowUpRight size={16} weight="bold" />
+                                </a>
                             </div>
                         </motion.article>
                     ))}

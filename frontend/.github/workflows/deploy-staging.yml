@@ -1,0 +1,99 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: ['release/**']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          CI: true
+          REACT_APP_BACKEND_URL: ${{ secrets.STAGING_BACKEND_URL }}
+
+      - name: Download build artifacts (if available)
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+          path: build/
+
+      - name: Verify build exists
+        run: |
+          if [ ! -f "build/index.html" ]; then
+            echo "Build not found, rebuilding..."
+            npm run build
+          fi
+          ls -la build/
+
+      - name: Deploy to Staging via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST_STAGING }}
+          username: ${{ secrets.FTP_USER_STAGING }}
+          password: ${{ secrets.FTP_PASS_STAGING }}
+          protocol: ftps
+          port: 21
+          local-dir: ./build/
+          server-dir: /public_html/
+          dangerous-clean-slate: true
+          exclude: |
+            **/.git*
+            **/.github*
+            **/node_modules/**
+
+      - name: Purge Cloudflare Cache (Staging)
+        if: env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ZONE_ID
+        run: |
+          echo "Purging Cloudflare cache for staging..."
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"purge_everything":true}'
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying staging deployment..."
+          curl -sI "https://staging.yourdomain.com" | head -1
+
+      - name: Notify Slack (Optional)
+        if: env.SLACK_WEBHOOK_URL
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"🟡 Deployed ${{ github.ref_name }} to staging: https://staging.yourdomain.com"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

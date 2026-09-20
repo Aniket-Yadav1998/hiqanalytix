@@ -1,0 +1,127 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: write
+      deployments: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          CI: true
+          REACT_APP_BACKEND_URL: ${{ secrets.PRODUCTION_BACKEND_URL }}
+
+      - name: Download build artifacts (if available)
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+          path: build/
+
+      - name: Verify build exists
+        run: |
+          if [ ! -f "build/index.html" ]; then
+            echo "Build not found, rebuilding..."
+            npm run build
+          fi
+          ls -la build/
+
+      - name: Deploy to Production via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST_PROD }}
+          username: ${{ secrets.FTP_USER_PROD }}
+          password: ${{ secrets.FTP_PASS_PROD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./build/
+          server-dir: /public_html/
+          dangerous-clean-slate: true
+          exclude: |
+            **/.git*
+            **/.github*
+            **/node_modules/**
+
+      - name: Purge Cloudflare Cache (Production)
+        if: env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ZONE_ID
+        run: |
+          echo "Purging Cloudflare cache for production..."
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"purge_everything":true}'
+
+      - name: Verify production deployment
+        run: |
+          echo "Verifying production deployment..."
+          curl -sI "https://yourdomain.com" | head -1
+          curl -sI "https://yourdomain.com/#contact" | head -1
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            build/**
+
+      - name: Notify Slack (Optional)
+        if: env.SLACK_WEBHOOK_URL
+        run: |
+          VERSION="${GITHUB_REF##*/}"
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"🚀 Deployed $VERSION to production: https://yourdomain.com\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Post-deployment smoke tests
+        run: |
+          echo "Running post-deployment checks..."
+          # Check critical pages return 200
+          for path in "/" "/#contact" "/#services" "/#about"; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "https://yourdomain.com$path")
+            if [ "$status" != "200" ]; then
+              echo "❌ $path returned $status"
+              exit 1
+            fi
+            echo "✅ $path returned $status"
+          done

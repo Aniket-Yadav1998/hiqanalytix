@@ -2,6 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkle } from "@phosphor-icons/react";
 import HeroAutomationFlow from "@/components/site/HeroAutomationFlow";
+import { Button } from "@/components/ui/button";
 
 const rotators = [
     "Power BI dashboards",
@@ -57,7 +58,7 @@ export default function Hero() {
                 >
                     <span
                         data-testid="hero-eyebrow"
-                        className="inline-flex items-center gap-2 border border-brand-light bg-brand-light px-3 py-1.5 text-xs uppercase tracking-[0.2em] text-brand-dark"
+                        className="inline-flex items-center gap-2 border border-brand-light bg-brand-light px-3 py-1.5 text-xs tracking-[0.08em] text-brand-dark"
                     >
                         <Sparkle size={14} weight="fill" className="text-brand" />
                         Microsoft Power Platform consulting firm
@@ -108,26 +109,35 @@ export default function Hero() {
                         data-testid="hero-subheading"
                         className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-800 md:text-lg"
                     >
-                        for Financial, Automotive, Engineering, Energy and Health leaders
-                        who need decisions in hours, not months.
+                        for Financial, Automotive, Engineering, Energy and Health
+                        decision-makers who need trusted answers in hours, not months.
                     </p>
 
                     <div className="mt-10 flex flex-wrap items-center gap-4">
-                        <a
-                            href="#contact"
+                        <Button
+                            asChild
+                            variant="primary"
+                            size="xl"
                             data-testid="hero-cta-primary"
-                            className="group inline-flex items-center gap-2 bg-brand px-6 py-3.5 font-medium text-white shadow-lg shadow-brand/20 transition-all duration-200 hover:bg-brand-dark hover:shadow-brand/30"
                         >
-                            Start a conversation
-                            <ArrowRight size={18} weight="bold" className="transition-transform duration-200 group-hover:translate-x-1" />
-                        </a>
-                        <a
-                            href="#roi"
+                            <a
+                                href="#contact"
+                                className="group inline-flex items-center gap-2 px-6 py-3.5"
+                            >
+                                Start a conversation
+                                <ArrowRight size={18} weight="bold" className="transition-transform duration-200 group-hover:translate-x-1" />
+                            </a>
+                        </Button>
+                        <Button
+                            asChild
+                            variant="secondary-alt"
+                            size="xl"
                             data-testid="hero-cta-secondary"
-                            className="inline-flex items-center gap-2 border border-neutral-900 px-6 py-3.5 font-medium text-neutral-900 transition-colors duration-200 hover:bg-neutral-900 hover:text-white"
                         >
-                            Calculate your ROI
-                        </a>
+                            <a href="#roi" className="inline-flex items-center gap-2 px-6 py-3.5">
+                                Calculate your ROI
+                            </a>
+                        </Button>
                     </div>
 
                     {/* Trust ribbons */}

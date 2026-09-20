@@ -5,7 +5,7 @@ import { CheckCircle } from "@phosphor-icons/react";
 const aboutImg = "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwzfHxkaXZlcnNlJTIwY29ycG9yYXRlJTIwdGVhbSUyMG1lZXRpbmd8ZW58MHx8fHwxNzg2ODIwOTk3fDA&ixlib=rb-4.1.0&q=85";
 
 const bullets = [
-    "Deep specialisation in Microsoft Power Platform, Power BI and RPA.",
+    "Specializes in Microsoft Power Platform, Power BI and RPA.",
     "Delivery pods embedded with your teams — remote, on-site or hybrid.",
     "Governance-first approach with security, data privacy and audit baked in.",
     "Outcome-based engagements with transparent KPIs and reporting.",
@@ -51,14 +51,14 @@ export default function About() {
                         About HARVESTIQ LLP
                     </span>
                     <h2 data-testid="about-heading" className="mt-4 font-display text-4xl font-extrabold leading-tight text-neutral-900 md:text-5xl lg:text-6xl">
-                        A senior team of data engineers, dashboard designers and automation specialists.
+                        A team of data engineers, dashboard designers and automation specialists.
                     </h2>
                     <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-800">
                         We are a boutique consulting firm helping enterprise
                         clients rebuild the way they measure, decide and operate. As a
                         specialist Power BI and automation consultancy, we translate
-                        messy operational data into decisions leaders can act on the
-                        same day — from finance close automation to plant-floor telemetry.
+                        messy operational data into actionable intelligence so leaders
+                        can act upon strategic insights with confidence.
                     </p>
 
                     <ul data-testid="about-bullets" className="mt-10 grid gap-4 sm:grid-cols-2">

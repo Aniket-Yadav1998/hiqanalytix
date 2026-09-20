@@ -8,6 +8,7 @@ import logging
 import re
 import asyncio
 import time
+from html import escape as html_escape
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
 from typing import List, Optional
@@ -42,7 +43,13 @@ if RESEND_API_KEY:
 else:
     logger.info("RESEND_API_KEY not set — lead email notifications disabled")
 
-app = FastAPI(title="hiqanalytix API")
+_ENABLE_API_DOCS = os.environ.get("ENABLE_API_DOCS", "false").lower() == "true"
+app = FastAPI(
+    title="hiqanalytix API",
+    docs_url="/docs" if _ENABLE_API_DOCS else None,
+    redoc_url="/redoc" if _ENABLE_API_DOCS else None,
+    openapi_url="/openapi.json" if _ENABLE_API_DOCS else None,
+)
 api_router = APIRouter(prefix="/api")
 
 
@@ -53,6 +60,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        if request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["Cache-Control"] = "no-store" if request.url.path.startswith("/api") else response.headers.get("Cache-Control", "public, max-age=3600")
         return response
 
@@ -91,7 +100,7 @@ class ContactCreate(BaseModel):
     phone: str = Field(..., min_length=6, max_length=32)
     telephone: Optional[str] = Field(default=None, max_length=32)
     company: str = Field(..., min_length=2, max_length=160)
-    message: str = Field(..., min_length=10, max_length=4000)
+    message: str = Field(..., min_length=10, max_length=500)
     website: str = Field(default="", max_length=200)
     form_started_at: Optional[int] = None
     human_confirmed: bool = False
@@ -117,7 +126,7 @@ class ContactCreate(BaseModel):
             or ".." in email
             or local_part.startswith(".")
             or local_part.endswith(".")
-            or any(len(part) < 2 for part in domain_parts)
+            or any(len(part) < 1 for part in domain_parts)
         ):
             raise ValueError("enter a valid business email address")
         return email.lower()
@@ -225,6 +234,35 @@ class InsightCreate(BaseModel):
     image_url: str = Field(default="", max_length=500)
 
 
+class NewsletterCreate(BaseModel):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: EmailStr) -> str:
+        email = str(v).strip()
+        email_parts = email.split("@", 1)
+        local_part = email_parts[0] if email_parts else ""
+        domain_parts = email_parts[1].split(".") if len(email_parts) == 2 else []
+        if (
+            len(email) > 254
+            or not _EMAIL_PATTERN.fullmatch(email)
+            or ".." in email
+            or local_part.startswith(".")
+            or local_part.endswith(".")
+            or any(len(part) < 1 for part in domain_parts)
+        ):
+            raise ValueError("enter a valid email address")
+        return email.lower()
+
+
+class NewsletterSubscriber(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 # ---------- Email helper (best-effort, non-blocking) ----------
 def _send_email_sync(subject: str, html: str):
     """Blocking call — must be run via asyncio.to_thread."""
@@ -252,16 +290,24 @@ async def _notify(subject: str, html: str):
 
 
 def _contact_email_html(c: "Contact") -> str:
+    name = html_escape(c.name)
+    email = html_escape(c.email)
+    phone = html_escape(c.phone)
+    telephone = html_escape(c.telephone or "Not provided")
+    company = html_escape(c.company)
+    message = html_escape(c.message).replace("\n", "<br>")
+    received_at = html_escape(c.created_at.isoformat())
     return f"""
     <div style="font-family: Arial, Helvetica, sans-serif; color:#0B0B0F; max-width:640px; margin:auto;">
       <h2 style="color:#F97316; margin:0 0 16px;">New contact lead — hiqanalytix.com</h2>
       <table cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; border:1px solid #E5E5E5;">
-        <tr><td style="background:#FAFAFA; font-weight:bold; width:150px;">Name</td><td>{c.name}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Email</td><td>{c.email}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Phone</td><td>{c.phone}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Company</td><td>{c.company}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold; vertical-align:top;">Message</td><td style="white-space:pre-wrap;">{c.message}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Received</td><td>{c.created_at.isoformat()}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold; width:150px;">Name</td><td>{name}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Email</td><td>{email}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Phone</td><td>{phone}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Telephone</td><td>{telephone}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Company</td><td>{company}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold; vertical-align:top;">Message</td><td>{message}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Received</td><td>{received_at}</td></tr>
       </table>
       <p style="color:#666; font-size:12px; margin-top:16px;">Auto-generated from the contact form on hiqanalytix.com</p>
     </div>
@@ -269,23 +315,29 @@ def _contact_email_html(c: "Contact") -> str:
 
 
 def _roi_email_html(r: "RoiLead") -> str:
+    name = html_escape(r.name)
+    email = html_escape(r.email)
+    company = html_escape(r.company)
+    industry = html_escape(r.industry)
+    current_tools = html_escape(r.current_tools)
+    received_at = html_escape(r.created_at.isoformat())
     return f"""
     <div style="font-family: Arial, Helvetica, sans-serif; color:#0B0B0F; max-width:640px; margin:auto;">
       <h2 style="color:#F97316; margin:0 0 8px;">New ROI calculator lead — hiqanalytix.com</h2>
-      <p style="margin:0 0 20px; color:#333;">Industry: <b>{r.industry}</b> · Company: <b>{r.company}</b></p>
+      <p style="margin:0 0 20px; color:#333;">Industry: <b>{industry}</b> · Company: <b>{company}</b></p>
       <table cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; border:1px solid #E5E5E5;">
-        <tr><td style="background:#FAFAFA; font-weight:bold; width:220px;">Name</td><td>{r.name}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Email</td><td>{r.email}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Company</td><td>{r.company}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Industry</td><td>{r.industry}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold; width:220px;">Name</td><td>{name}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Email</td><td>{email}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Company</td><td>{company}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Industry</td><td>{industry}</td></tr>
         <tr><td style="background:#FAFAFA; font-weight:bold;">Current manpower</td><td>{r.current_manpower} people</td></tr>
         <tr><td style="background:#FAFAFA; font-weight:bold;">Current hours / week</td><td>{r.current_hours_per_week}</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Tools today</td><td>{r.current_tools}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Tools today</td><td>{current_tools}</td></tr>
         <tr><td style="background:#FFF7ED; font-weight:bold; color:#C2410C;">Projected saving</td>
             <td><b>{r.money_savings_pct}%</b> cost · <b>{r.manpower_reduction_pct}%</b> less manpower · <b>{r.time_reduction_pct}%</b> faster</td></tr>
         <tr><td style="background:#FFF7ED; font-weight:bold; color:#C2410C;">Projected steady-state</td>
             <td>{r.projected_manpower} people · {r.projected_hours_per_week} hrs/wk</td></tr>
-        <tr><td style="background:#FAFAFA; font-weight:bold;">Received</td><td>{r.created_at.isoformat()}</td></tr>
+        <tr><td style="background:#FAFAFA; font-weight:bold;">Received</td><td>{received_at}</td></tr>
       </table>
       <p style="color:#666; font-size:12px; margin-top:16px;">Auto-generated from the ROI calculator on hiqanalytix.com</p>
     </div>
@@ -347,19 +399,6 @@ async def create_contact(payload: ContactCreate, background_tasks: BackgroundTas
     return contact
 
 
-@api_router.get("/contact", response_model=List[Contact])
-async def list_contacts(limit: int = 100):
-    limit = max(1, min(limit, 500))
-    items = await db.contacts.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
-    for item in items:
-        if isinstance(item.get("created_at"), str):
-            try:
-                item["created_at"] = datetime.fromisoformat(item["created_at"])
-            except ValueError:
-                pass
-    return items
-
-
 def _compute_roi(manpower: int, hours: int) -> dict:
     money_savings_pct = 35
     manpower_reduction_pct = 55
@@ -394,17 +433,22 @@ async def create_roi_estimate(payload: RoiCreate, background_tasks: BackgroundTa
     return lead
 
 
-@api_router.get("/roi-estimate", response_model=List[RoiLead])
-async def list_roi_estimates(limit: int = 100):
-    limit = max(1, min(limit, 500))
-    items = await db.roi_leads.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
-    for item in items:
-        if isinstance(item.get("created_at"), str):
-            try:
-                item["created_at"] = datetime.fromisoformat(item["created_at"])
-            except ValueError:
-                pass
-    return items
+@api_router.post("/newsletter", response_model=NewsletterSubscriber, status_code=201)
+async def subscribe_newsletter(payload: NewsletterCreate):
+    existing = await db.newsletter_subscribers.find_one({"email": payload.email})
+    if existing:
+        existing.pop("_id", None)
+        return NewsletterSubscriber(**existing)
+    subscriber = NewsletterSubscriber(email=payload.email)
+    doc = subscriber.model_dump()
+    doc["created_at"] = doc["created_at"].isoformat()
+    try:
+        await db.newsletter_subscribers.insert_one(doc)
+    except Exception:
+        logger.exception("Failed to persist newsletter subscriber")
+        raise HTTPException(status_code=500, detail="Failed to subscribe. Please try again later.")
+    logger.info("New newsletter subscriber saved: %s", subscriber.email)
+    return subscriber
 
 
 # ---------- Insights ----------
@@ -509,28 +553,29 @@ async def list_insights(limit: int = 12):
     return items
 
 
-@api_router.post("/insights", response_model=InsightPost, status_code=201)
-async def create_insight(payload: InsightCreate):
-    post = InsightPost(**payload.model_dump())
-    doc = post.model_dump()
-    doc["published_at"] = doc["published_at"].isoformat()
-    try:
-        await db.insights.insert_one(doc)
-    except Exception:
-        logger.exception("Failed to persist insight")
-        raise HTTPException(status_code=500, detail="Failed to publish. Please try again.")
-    return post
-
-
 # ---------- Lifecycle ----------
 app.include_router(api_router)
+
+_default_cors_origins = [
+    "http://localhost:3000",
+    "https://hiqanalytix.com",
+    "https://www.hiqanalytix.com",
+]
+_configured_cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", ",".join(_default_cors_origins)).split(",")
+    if origin.strip()
+]
+if "*" in _configured_cors_origins:
+    logger.warning("Ignoring wildcard CORS_ORIGINS because credentialed requests are enabled")
+    _configured_cors_origins = _default_cors_origins
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_configured_cors_origins,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 

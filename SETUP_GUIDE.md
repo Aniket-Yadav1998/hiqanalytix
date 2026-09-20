@@ -218,10 +218,17 @@ yarn start
 ```
 Your browser auto-opens at **http://localhost:3000**.
 
+The H2 browser is local-only. To enable it, start the Java API with the
+`local` profile (do not use this profile on Render):
+```bash
+cd deliverables/spring-boot
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
 ### F.1  Test it end-to-end
 1. Scroll to **Contact us**, fill the form, click **Send message** → green success toast appears.
 2. Scroll to the **ROI Calculator**, fill it in, click **Show my savings** → the pie charts render.
-3. Go to http://localhost:8080/h2-console → connect (same details as E.1) → open `CONTACTS` and `ROI_LEADS`. Your submissions are there. 🎉
+3. If you started the API with the `local` profile, go to http://localhost:8080/h2-console/ → connect (same details as E.1) → open `CONTACTS` and `ROI_LEADS`. Your submissions are there. 🎉
 
 To stop the servers: press `Ctrl + C` in each terminal.
 
@@ -301,6 +308,7 @@ We will convert the Internal URL to Spring Boot's JDBC format in Part I.
    | `DB_PASSWORD` | `<PASSWORD>` from the URL |
    | `DB_DRIVER` | `org.postgresql.Driver` |
    | `DB_DIALECT` | `org.hibernate.dialect.PostgreSQLDialect` |
+   | `CORS_ALLOWED_ORIGINS` | `https://hiqanalytix.com,https://www.hiqanalytix.com,https://hiqanalytix.vercel.app` |
 
    Example: if Render gave you `postgresql://hiqdb_user:AbCdEf@dpg-1234-a.oregon-postgres.render.com:5432/hiqdb`, then:
    - `DB_URL` = `jdbc:postgresql://dpg-1234-a.oregon-postgres.render.com:5432/hiqdb`
@@ -328,21 +336,12 @@ Every submission from the Contact form and the ROI calculator can auto-email you
 5. When status is **Live**, Render shows the API URL, e.g. `https://hiqanalytix-api.onrender.com`.
 6. Verify: open `https://hiqanalytix-api.onrender.com/api/health` → should return `{"status":"healthy"…}`.
 
-### I.1  Update CORS with your future domain
-Open `deliverables/spring-boot/src/main/java/com/hiqanalytix/contactapi/config/CorsConfig.java` and set the origins to:
-```java
-.allowedOrigins(
-    "http://localhost:3000",
-    "https://hiqanalytix.com",
-    "https://www.hiqanalytix.com",
-    "https://hiqanalytix.vercel.app"
-)
-```
-Push:
-```bash
-git add . && git commit -m "cors: add prod domains" && git push
-```
-Render redeploys automatically (~2 min).
+The H2 console is disabled by default, and the production frontend uses the
+Render API URL from `frontend/.env.production`. Do not point the production
+frontend at `localhost` and do not set `H2_CONSOLE_ENABLED=true` on Render.
+
+The API reads `CORS_ALLOWED_ORIGINS` at startup, so update that Render
+environment variable if your Vercel or custom domain changes, then redeploy.
 
 > Free Render web services **sleep after 15 min idle** and cold-start on the next request (10–30 s). To keep it warm for free, use https://cron-job.org to hit `/api/health` every 10 minutes.
 
@@ -504,6 +503,23 @@ Priority actions that move the needle for a young consultancy site:
 | **H2 Console cannot log in** | Make sure the JDBC URL matches exactly: `jdbc:h2:file:./data/hiqdb;AUTO_SERVER=TRUE`. Case sensitive. |
 | **ROI calculator shows "undefined%" values on the result cards** | The Spring Boot backend is serializing JSON in camelCase but the React frontend reads snake_case. Confirm `deliverables/spring-boot/src/main/resources/application.properties` has this line: `spring.jackson.property-naming-strategy=SNAKE_CASE`. Restart Spring Boot in IntelliJ (stop and re-run) after editing. |
 | **Contact form succeeds but I don't see the row in H2 Console** | Make sure your H2 Console **JDBC URL** matches the running app exactly: `jdbc:h2:file:./data/hiqdb;AUTO_SERVER=TRUE`. If Spring Boot is running in a different working directory, the file path differs. Or use the API directly: `curl http://localhost:8080/api/contact`. |
+
+### Exporting contact data
+
+Contact records can be downloaded for operational work in JSON, CSV, or Excel-compatible TSV format. The export endpoint is protected because it contains personal contact information.
+
+For a direct browser option, open `http://localhost:8080/api/admin/exports`, enter the same `EXPORT_TOKEN`, and select the required download format.
+
+Set an `EXPORT_TOKEN` environment variable before starting Spring Boot, then call one of these URLs with the `X-Export-Token` header:
+
+```powershell
+$env:EXPORT_TOKEN = "use-a-long-private-token"
+curl.exe -H "X-Export-Token: use-a-long-private-token" "http://localhost:8080/api/contact/export?format=csv" -o contacts.csv
+curl.exe -H "X-Export-Token: use-a-long-private-token" "http://localhost:8080/api/contact/export?format=json" -o contacts.json
+curl.exe -H "X-Export-Token: use-a-long-private-token" "http://localhost:8080/api/contact/export?format=tsv" -o contacts.xls
+```
+
+The TSV download opens directly in Excel and other spreadsheet tools. Available formats are `csv`, `json`, and `tsv` (also accepted as `xls` or `excel`).
 | **Render build fails with `permission denied ./mvnw`** | Use build command `mvn clean package -DskipTests` — Render's Java runtime ships Maven, no wrapper needed. |
 | **"This site can't be reached" on hiqanalytix.com** | DNS not propagated yet — wait 30 minutes. Check https://dnschecker.org — enter `hiqanalytix.com` → the world map should mostly show green `76.76.21.21`. |
 | **I changed a file — how do I redeploy?** | `git add . && git commit -m "…" && git push`. Vercel and Render both auto-deploy on push to `main`. |
