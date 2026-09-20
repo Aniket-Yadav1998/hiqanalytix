@@ -62,14 +62,60 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         if request.url.scheme == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "img-src 'self' data: https://images.unsplash.com https://hiqanalytix.com; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "font-src 'self' data:; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'"
+        )
         response.headers["Cache-Control"] = "no-store" if request.url.path.startswith("/api") else response.headers.get("Cache-Control", "public, max-age=3600")
         return response
 
 
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Global, in-memory, per-IP request throttle (single-process; resets on restart)."""
+
+    def __init__(self, app, window_seconds: int, max_requests: int):
+        super().__init__(app)
+        self.window_seconds = window_seconds
+        self.max_requests = max_requests
+        self._buckets = {}
+
+    async def dispatch(self, request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.monotonic()
+        recent = [stamp for stamp in self._buckets.get(client_ip, []) if now - stamp < self.window_seconds]
+        if len(recent) >= self.max_requests:
+            from starlette.responses import JSONResponse
+            return JSONResponse(status_code=429, content={"detail": "Too many requests. Please try again later."})
+        recent.append(now)
+        self._buckets[client_ip] = recent
+        return await call_next(request)
+
+
+def _enforce_rate_limit(buckets: dict, client_ip: str, window_seconds: int, max_requests: int):
+    now = time.monotonic()
+    recent = [stamp for stamp in buckets.get(client_ip, []) if now - stamp < window_seconds]
+    if len(recent) >= max_requests:
+        raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
+    recent.append(now)
+    buckets[client_ip] = recent
+
+
 app.add_middleware(SecurityHeadersMiddleware)
+# Global DoS guard: 100 requests / 15 minutes per IP across all routes.
+app.add_middleware(RateLimitMiddleware, window_seconds=900, max_requests=100)
 _contact_rate_limit = {}
 _CONTACT_WINDOW_SECONDS = 300
 _CONTACT_MAX_REQUESTS = 3
+# Stricter per-route limits for lead-generating / heavier endpoints: 5 requests / 15 minutes per IP.
+_roi_rate_limit = {}
+_newsletter_rate_limit = {}
+_STRICT_WINDOW_SECONDS = 900
+_STRICT_MAX_REQUESTS = 5
 _MOBILE_DIGITS = {
     "IN": {10}, "US": {10}, "CA": {10}, "GB": {10}, "DE": {10, 11},
     "FR": {9}, "IT": {9, 10}, "ES": {9}, "NL": {9}, "BE": {9},
@@ -376,12 +422,7 @@ async def create_contact(payload: ContactCreate, background_tasks: BackgroundTas
         raise HTTPException(status_code=400, detail="Please take a moment to review your details")
 
     client_ip = request.client.host if request.client else "unknown"
-    now = time.monotonic()
-    recent = [stamp for stamp in _contact_rate_limit.get(client_ip, []) if now - stamp < _CONTACT_WINDOW_SECONDS]
-    if len(recent) >= _CONTACT_MAX_REQUESTS:
-        raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
-    recent.append(now)
-    _contact_rate_limit[client_ip] = recent
+    _enforce_rate_limit(_contact_rate_limit, client_ip, _CONTACT_WINDOW_SECONDS, _CONTACT_MAX_REQUESTS)
 
     contact = Contact(**payload.model_dump())
     doc = contact.model_dump()
@@ -415,7 +456,9 @@ def _compute_roi(manpower: int, hours: int) -> dict:
 
 
 @api_router.post("/roi-estimate", response_model=RoiLead, status_code=201)
-async def create_roi_estimate(payload: RoiCreate, background_tasks: BackgroundTasks):
+async def create_roi_estimate(payload: RoiCreate, background_tasks: BackgroundTasks, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    _enforce_rate_limit(_roi_rate_limit, client_ip, _STRICT_WINDOW_SECONDS, _STRICT_MAX_REQUESTS)
     computed = _compute_roi(payload.current_manpower, payload.current_hours_per_week)
     lead = RoiLead(**payload.model_dump(), **computed)
     doc = lead.model_dump()
@@ -434,7 +477,9 @@ async def create_roi_estimate(payload: RoiCreate, background_tasks: BackgroundTa
 
 
 @api_router.post("/newsletter", response_model=NewsletterSubscriber, status_code=201)
-async def subscribe_newsletter(payload: NewsletterCreate):
+async def subscribe_newsletter(payload: NewsletterCreate, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    _enforce_rate_limit(_newsletter_rate_limit, client_ip, _STRICT_WINDOW_SECONDS, _STRICT_MAX_REQUESTS)
     existing = await db.newsletter_subscribers.find_one({"email": payload.email})
     if existing:
         existing.pop("_id", None)

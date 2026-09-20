@@ -21,3 +21,11 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local configuration and generated data
+frontend/.env.production
+deliverables/data/*.mv.db
+deliverables/spring-boot/src/main/resources/application-local.properties
+frontend/null
+frontend/package-lock.json
+frontend/audit-frontend.json

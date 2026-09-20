@@ -76,9 +76,26 @@ function validate(f, captchaSum) {
     ) {
         errors.email = "Enter a valid business email address";
     }
-    if (!country) errors.country = "Select your country";
-    if (!/^[\d\s()-]+$/.test(f.phone.trim()) || !country || !country.digits.includes(mobileDigits.length))
-        errors.phone = `Enter a valid ${country?.name || ""} mobile number (${country?.digits.join(" or ")} digits)`;
+    if (!country) {
+        errors.country = "Select your country";
+    } else {
+        const validLengths = country.digits;
+        const minDigits = Math.min(...validLengths);
+        const maxDigits = Math.max(...validLengths);
+        const expected = validLengths.length === 1 ? `${validLengths[0]} digits` : `${minDigits}–${maxDigits} digits`;
+        
+        if (!f.phone.trim()) {
+            errors.phone = `Mobile number is required`;
+        } else if (!/^[\d\s()-]+$/.test(f.phone.trim())) {
+            errors.phone = `Enter a valid ${country.name} mobile number (${expected})`;
+        } else if (mobileDigits.length < minDigits) {
+            errors.phone = `Mobile number too short — enter ${minDigits} digits`;
+        } else if (mobileDigits.length > maxDigits) {
+            errors.phone = `Mobile number too long — enter ${maxDigits} digits`;
+        } else if (!validLengths.includes(mobileDigits.length)) {
+            errors.phone = `Enter a valid ${country.name} mobile number (${expected})`;
+        }
+    }
     if (f.telephone && !/^[\d\s+()\-]{6,32}$/.test(f.telephone.trim()))
         errors.telephone = "Enter a valid telephone number";
     if (!industries.includes(f.industry)) errors.industry = "Select your industry";
@@ -236,8 +253,8 @@ export default function Contact() {
 
                         <ul className="mt-10 space-y-5">
                             <li className="flex items-center gap-4 text-neutral-800">
-                                <span className="grid h-10 w-10 place-items-center border border-orange-200 bg-orange-50">
-                                    <EnvelopeSimple weight="duotone" size={18} className="text-orange-500" />
+                                <span className="flex-shrink-0 grid h-10 w-10 place-items-center">
+                                    <EnvelopeSimple weight="duotone" size={22} className="text-brand" />
                                 </span>
                                 <a
                                     href="mailto:connect@hiqanalytix.com"
@@ -248,8 +265,8 @@ export default function Contact() {
                                 </a>
                             </li>
                             <li className="flex items-center gap-4 text-neutral-800">
-                                <span className="grid h-10 w-10 place-items-center border border-orange-200 bg-orange-50">
-                                    <MapPin weight="duotone" size={18} className="text-orange-500" />
+                                <span className="flex-shrink-0 grid h-10 w-10 place-items-center">
+                                    <MapPin weight="duotone" size={22} className="text-brand" />
                                 </span>
                                 <a
                                     href="https://www.google.com/maps/search/?api=1&query=World+Trade+Center+Kharadi+Pune+Maharashtra+411014+India"
