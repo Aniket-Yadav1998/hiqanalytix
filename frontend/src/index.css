@@ -4,6 +4,8 @@
 
 html {
     background-color: #F7FAF7;
+    scrollbar-color: #1E5E29 #DDEBDD;
+    scrollbar-width: auto;
 }
 
 body {
@@ -37,18 +39,24 @@ code {
 }
 
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 13px;
+    height: 13px;
 }
 ::-webkit-scrollbar-track {
-    background: #FFFFFF;
+    background: #DDEBDD;
+    border-left: 1px solid #B7DDBA;
 }
 ::-webkit-scrollbar-thumb {
-    background: #E5E5E5;
-    border-radius: 8px;
+    background: #1E5E29;
+    border: 3px solid #DDEBDD;
+    border-radius: 10px;
+    min-height: 42px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #D4D4D4;
+    background: #48A14D;
+}
+::-webkit-scrollbar-button {
+    display: none;
 }
 
 .hero-grid {

@@ -70,7 +70,7 @@ export default function TechStack() {
                             Platforms we build with.
                         </h2>
                     </div>
-                    <p className="max-w-2xl text-lg leading-relaxed text-neutral-600 lg:col-span-6 lg:pt-4">
+                    <p className="max-w-2xl text-lg leading-relaxed text-neutral-600 lg:col-span-6 lg:col-start-1">
                         Every project is delivered on a curated stack of Microsoft Power
                         Platform, Azure data services and modern automation tools —
                         chosen for governance, scale and total cost of ownership.
@@ -122,9 +122,6 @@ export default function TechStack() {
                         ))}
                     </div>
                 </div>
-                <p className="mt-4 text-xs text-neutral-500">
-                    ← Scroll horizontally to explore the full stack. Hover the marquee to pause it.
-                </p>
             </div>
         </section>
     );

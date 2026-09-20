@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, useScroll, useSpring } from "framer-motion";
 import { EnvelopeSimple, ArrowUpRight, CaretDown } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 
 const aboutLinks = [
     { href: "#about", label: "About" },
@@ -13,7 +14,7 @@ const links = [
     { href: "#case-studies", label: "Case Studies" },
     { href: "#roi", label: "ROI" },
     { href: "#insights", label: "Insights" },
-    { href: "#credentials", label: "Credentials" },
+    { href: "#credentials", label: "Empowered by" },
     { href: "#contact", label: "Contact Us" },
 ];
 
@@ -40,11 +41,11 @@ export default function Navbar() {
                     scrolled ? "max-h-0 opacity-0" : "max-h-16 opacity-100"
                 }`}
             >
-                <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6 text-[11px] lg:px-10">
+                <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6 text-xs lg:px-10">
                     <div className="flex items-center gap-6 text-white/80">
                         <a
                             href="mailto:connect@hiqanalytix.com"
-                            className="group inline-flex items-center gap-1.5 underline decoration-white/35 underline-offset-4 transition-colors hover:text-white hover:decoration-emerald-300"
+                            className="group inline-flex items-center gap-1.5 underline decoration-white/35 underline-offset-4 transition-colors hover:text-white hover:decoration-brand"
                             aria-label="Email HARVESTIQ LLP at connect@hiqanalytix.com"
                         >
                             <EnvelopeSimple size={12} weight="bold" /> connect@hiqanalytix.com
@@ -53,13 +54,13 @@ export default function Navbar() {
                     <div className="flex items-center gap-4 text-white/70">
                         <a
                             href="#credentials"
-                            className="hidden items-center gap-1.5 border border-white/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white/75 transition-colors hover:border-emerald-300/60 hover:text-emerald-300 lg:inline-flex"
+                            className="hidden items-center gap-1.5 border border-white/15 px-2.5 py-1 text-xs tracking-[0.08em] text-white/75 transition-colors hover:border-brand/60 hover:text-brand lg:inline-flex"
                         >
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                             Startup India recognised
                         </a>
-                        <span className="inline-flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                        <span className="inline-flex items-center gap-1.5 text-xs">
+                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
                             Global delivery · GMT / IST / EST
                         </span>
                         <a href="#insights" className="inline-flex items-center gap-1 hover:text-white">
@@ -79,13 +80,13 @@ export default function Navbar() {
             >
                 <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-6 h-16 lg:px-10">
                     <a href="#home" data-testid="nav-logo" className="flex-shrink-0 min-w-max flex items-center gap-2.5">
-                        <img src="/logo.jpeg" alt="HARVESTIQ LLP" className="h-9 w-auto" />
+                        <img src="/logo-transparent.png" alt="HARVESTIQ LLP" className="h-9 w-auto" />
                         <div className="flex flex-col leading-none">
                             <span className="font-display text-lg font-semibold tracking-tight text-neutral-900">
                                 HARVESTIQ LLP
                             </span>
-                            <span className="mt-0.5 text-[9px] uppercase tracking-[0.28em] text-neutral-700">
-                                Analytics Solutions
+                            <span className="mt-0.5 text-xs tracking-[0.1em] text-neutral-700">
+                                Analytics solutions
                             </span>
                         </div>
                     </a>
@@ -134,13 +135,16 @@ export default function Navbar() {
                                 <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-brand transition-transform duration-300 group-hover:scale-x-100" />
                             </a>
                         ))}
-                        <a
-                            href="#contact"
+                        <Button
+                            asChild
+                            variant="primary-sm"
+                            size="default"
                             data-testid="nav-cta"
-                            className="group inline-flex items-center gap-1.5 bg-brand px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-brand/30"
                         >
-                            Book a demo <ArrowUpRight size={14} weight="bold" />
-                        </a>
+                            <a href="#contact" className="group inline-flex items-center gap-1.5 px-4 py-2">
+                                Book a demo <ArrowUpRight size={14} weight="bold" />
+                            </a>
+                        </Button>
                     </div>
 
                     <button
@@ -198,14 +202,17 @@ export default function Navbar() {
                                 {l.label}
                             </a>
                         ))}
-                        <a
-                            href="#contact"
-                            onClick={() => setOpen(false)}
+                        <Button
+                            asChild
+                            variant="primary-sm"
+                            size="xl"
+                            className="mt-4 w-full"
                             data-testid="nav-mobile-cta"
-                            className="mt-4 bg-brand px-4 py-3 text-center text-sm font-medium text-white"
                         >
-                            Book a demo
-                        </a>
+                            <a href="#contact" onClick={() => setOpen(false)} className="w-full">
+                                Book a demo
+                            </a>
+                        </Button>
                     </div>
                 </div>
             )}

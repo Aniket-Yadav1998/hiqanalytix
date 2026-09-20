@@ -48,10 +48,14 @@ const initial = {
     industry: "",
     message: "",
     website: "",
-    human_confirmed: false,
+    captcha_answer: "",
 };
 
-function validate(f) {
+function randomCaptcha() {
+    return { a: 1 + Math.floor(Math.random() * 9), b: 1 + Math.floor(Math.random() * 9) };
+}
+
+function validate(f, captchaSum) {
     const errors = {};
     const country = countries.find((item) => item.code === f.country);
     const mobileDigits = f.phone.replace(/\D/g, "");
@@ -72,21 +76,41 @@ function validate(f) {
     ) {
         errors.email = "Enter a valid business email address";
     }
-    if (!country) errors.country = "Select your country";
-    if (!/^[\d\s()-]+$/.test(f.phone.trim()) || !country || !country.digits.includes(mobileDigits.length))
-        errors.phone = `Enter a valid ${country?.name || ""} mobile number (${country?.digits.join(" or ")} digits)`;
+    if (!country) {
+        errors.country = "Select your country";
+    } else {
+        const validLengths = country.digits;
+        const minDigits = Math.min(...validLengths);
+        const maxDigits = Math.max(...validLengths);
+        const expected = validLengths.length === 1 ? `${validLengths[0]} digits` : `${minDigits}–${maxDigits} digits`;
+        
+        if (!f.phone.trim()) {
+            errors.phone = `Mobile number is required`;
+        } else if (!/^[\d\s()-]+$/.test(f.phone.trim())) {
+            errors.phone = `Enter a valid ${country.name} mobile number (${expected})`;
+        } else if (mobileDigits.length < minDigits) {
+            errors.phone = `Mobile number too short — enter ${minDigits} digits`;
+        } else if (mobileDigits.length > maxDigits) {
+            errors.phone = `Mobile number too long — enter ${maxDigits} digits`;
+        } else if (!validLengths.includes(mobileDigits.length)) {
+            errors.phone = `Enter a valid ${country.name} mobile number (${expected})`;
+        }
+    }
     if (f.telephone && !/^[\d\s+()\-]{6,32}$/.test(f.telephone.trim()))
         errors.telephone = "Enter a valid telephone number";
     if (!industries.includes(f.industry)) errors.industry = "Select your industry";
     if (!f.message.trim() || f.message.trim().length < 10) errors.message = "Message must be at least 10 characters";
+    if (f.message.length > 500) errors.message = "Message must not exceed 500 characters";
     if (f.website.trim()) errors.website = "Unable to submit this form";
-    if (!f.human_confirmed) errors.human_confirmed = "Please confirm that you are human";
+    if (!f.captcha_answer.trim() || Number(f.captcha_answer.trim()) !== captchaSum)
+        errors.captcha_answer = "Solve the sum correctly to verify you're human";
     return errors;
 }
 
 export default function Contact() {
     const [form, setForm] = useState(initial);
     const [formStartedAt] = useState(() => Date.now());
+    const [captcha, setCaptcha] = useState(randomCaptcha);
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const [countryOpen, setCountryOpen] = useState(false);
@@ -98,10 +122,11 @@ export default function Contact() {
     };
 
     const selectedCountry = countries.find((country) => country.code === form.country) || countries[0];
+    const formIsValid = Object.keys(validate(form, captcha.a + captcha.b)).length === 0;
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        const errs = validate(form);
+        const errs = validate(form, captcha.a + captcha.b);
         if (Date.now() - formStartedAt < 2500) errs.form = "Please take a moment to review your details";
         if (Object.keys(errs).length) {
             setErrors(errs);
@@ -121,10 +146,11 @@ export default function Contact() {
                 message: form.message,
                 website: form.website,
                 form_started_at: formStartedAt,
-                human_confirmed: form.human_confirmed,
+                human_confirmed: true,
             });
             toast.success("Thanks — we'll be in touch within 1 business day.");
             setForm(initial);
+            setCaptcha(randomCaptcha());
         } catch (err) {
             const detail = err?.response?.data?.detail;
             const msg = Array.isArray(detail)
@@ -138,50 +164,62 @@ export default function Contact() {
         }
     };
 
-    const field = (label, name, type = "text", placeholder = "", extra = {}) => (
-        <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-neutral-900">
-                {label}
-            </span>
-            {name === "message" ? (
-                <textarea
-                    name={name}
-                    rows={5}
-                    value={form[name]}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    data-testid={`contact-input-${name}`}
-                    className={`w-full resize-none border bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 ${
-                        errors[name]
-                            ? "border-red-400 focus:ring-red-300"
-                            : "border-neutral-300 focus:border-orange-500 focus:ring-orange-300"
-                    }`}
-                    {...extra}
-                />
-            ) : (
-                <input
-                    type={type}
-                    name={name}
-                    value={form[name]}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    autoComplete="off"
-                    data-testid={`contact-input-${name}`}
-                    className={`w-full border bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:ring-1 ${
-                        errors[name]
-                            ? "border-red-400 focus:ring-red-300"
-                            : "border-neutral-300 focus:border-orange-500 focus:ring-orange-300"
-                    }`}
-                    {...extra}
-                />
-            )}
-            {errors[name] && (
-                <span data-testid={`contact-error-${name}`} className="mt-2 block text-xs text-red-500">
-                    {errors[name]}
+    const field = (label, name, type = "text", placeholder = "", extra = {}) => {
+        const MAX_MESSAGE_LENGTH = 500;
+        const currentLength = name === "message" ? (form[name]?.length || 0) : 0;
+        const isMessage = name === "message";
+
+        return (
+            <label className="block">
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-neutral-900">
+                    {label}
                 </span>
-            )}
-        </label>
-    );
+                {isMessage ? (
+                    <>
+                        <textarea
+                            name={name}
+                            rows={5}
+                            value={form[name]}
+                            onChange={onChange}
+                            placeholder={placeholder}
+                            maxLength={MAX_MESSAGE_LENGTH}
+                            data-testid={`contact-input-${name}`}
+                            className={`w-full resize-none border bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 ${
+                                errors[name]
+                                    ? "border-red-400 focus:ring-red-300"
+                                    : "border-neutral-300 focus:border-orange-500 focus:ring-orange-300"
+                            }`}
+                            {...extra}
+                        />
+                        <p className="mt-1 text-right text-xs text-neutral-500" data-testid="message-char-count">
+                            {currentLength} / {MAX_MESSAGE_LENGTH}
+                        </p>
+                    </>
+                ) : (
+                    <input
+                        type={type}
+                        name={name}
+                        value={form[name]}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        autoComplete="off"
+                        data-testid={`contact-input-${name}`}
+                        className={`w-full border bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:ring-1 ${
+                            errors[name]
+                                ? "border-red-400 focus:ring-red-300"
+                                : "border-neutral-300 focus:border-orange-500 focus:ring-orange-300"
+                        }`}
+                        {...extra}
+                    />
+                )}
+                {errors[name] && (
+                    <span data-testid={`contact-error-${name}`} className="mt-2 block text-xs text-red-500">
+                        {errors[name]}
+                    </span>
+                )}
+            </label>
+        );
+    };
 
     return (
         <section
@@ -215,8 +253,8 @@ export default function Contact() {
 
                         <ul className="mt-10 space-y-5">
                             <li className="flex items-center gap-4 text-neutral-800">
-                                <span className="grid h-10 w-10 place-items-center border border-orange-200 bg-orange-50">
-                                    <EnvelopeSimple weight="duotone" size={18} className="text-orange-500" />
+                                <span className="flex-shrink-0 grid h-10 w-10 place-items-center">
+                                    <EnvelopeSimple weight="duotone" size={22} className="text-brand" />
                                 </span>
                                 <a
                                     href="mailto:connect@hiqanalytix.com"
@@ -227,10 +265,19 @@ export default function Contact() {
                                 </a>
                             </li>
                             <li className="flex items-center gap-4 text-neutral-800">
-                                <span className="grid h-10 w-10 place-items-center border border-orange-200 bg-orange-50">
-                                    <MapPin weight="duotone" size={18} className="text-orange-500" />
+                                <span className="flex-shrink-0 grid h-10 w-10 place-items-center">
+                                    <MapPin weight="duotone" size={22} className="text-brand" />
                                 </span>
-                                <span className="text-sm">Remote-first · Delivery centres globally</span>
+                                <a
+                                    href="https://www.google.com/maps/search/?api=1&query=World+Trade+Center+Kharadi+Pune+Maharashtra+411014+India"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-sm underline decoration-neutral-300 underline-offset-4 transition-colors hover:text-brand-dark hover:decoration-brand"
+                                    aria-label="Open HARVESTIQ LLP office address in Google Maps"
+                                >
+                                    8th Floor, WORLD TRADE CENTER, Dholepatil Farms Rd,
+                                    EON Free Zone, Kharadi, Pune, Maharashtra 411014, India
+                                </a>
                             </li>
                         </ul>
                     </motion.div>
@@ -343,29 +390,37 @@ export default function Contact() {
                         <div className="mt-6">
                             {field("Problem statement", "message", "text", "Briefly describe the business problem, desired outcome and relevant context…")}
                         </div>
-                        <label className={`mt-6 flex cursor-pointer items-start gap-3 border px-4 py-3 transition-colors ${
-                            errors.human_confirmed ? "border-red-300 bg-red-50" : "border-neutral-200 bg-white hover:border-brand-light"
+                        <label className={`mt-6 flex items-start gap-3 border px-4 py-3 transition-colors ${
+                            errors.captcha_answer ? "border-red-300 bg-red-50" : "border-neutral-200 bg-white"
                         }`}>
-                            <input
-                                type="checkbox"
-                                name="human_confirmed"
-                                checked={form.human_confirmed}
-                                onChange={onChange}
-                                data-testid="contact-human-check"
-                                className="mt-1 h-4 w-4 accent-brand"
-                            />
-                            <span className="flex items-start gap-2 text-xs leading-relaxed text-neutral-700">
-                                <ShieldCheck size={17} weight="duotone" className="mt-0.5 flex-none text-brand" />
+                            <ShieldCheck size={17} weight="duotone" className="mt-2.5 flex-none text-brand" />
+                            <span className="flex flex-1 flex-wrap items-center gap-3 text-xs leading-relaxed text-neutral-700">
                                 <span>
-                                    <strong className="font-semibold text-neutral-900">I&apos;m human</strong>
+                                    <strong className="font-semibold text-neutral-900">Verify you&apos;re human</strong>
                                     <br />
-                                    I confirm this is a genuine business enquiry, not an automated submission.
+                                    What is {captcha.a} + {captcha.b}?
                                 </span>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    name="captcha_answer"
+                                    value={form.captcha_answer}
+                                    onChange={onChange}
+                                    placeholder="Answer"
+                                    aria-label={`What is ${captcha.a} + ${captcha.b}?`}
+                                    data-testid="contact-captcha-input"
+                                    className={`w-24 border bg-white px-3 py-2 text-center text-neutral-900 focus:outline-none focus:ring-1 ${
+                                        errors.captcha_answer
+                                            ? "border-red-400 focus:ring-red-300"
+                                            : "border-neutral-300 focus:border-orange-500 focus:ring-orange-300"
+                                    }`}
+                                />
                             </span>
                         </label>
-                        {errors.human_confirmed && (
-                            <p data-testid="contact-error-human" className="mt-2 text-xs text-red-500">
-                                {errors.human_confirmed}
+                        {errors.captcha_answer && (
+                            <p data-testid="contact-error-captcha" className="mt-2 text-xs text-red-500">
+                                {errors.captcha_answer}
                             </p>
                         )}
                         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 pt-6">
@@ -374,7 +429,7 @@ export default function Contact() {
                             </p>
                             <button
                                 type="submit"
-                                disabled={submitting}
+                                disabled={submitting || !formIsValid}
                                 data-testid="contact-submit-btn"
                                 className="group inline-flex items-center gap-2 bg-orange-500 px-6 py-3.5 font-medium text-white transition-colors duration-200 hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
                             >

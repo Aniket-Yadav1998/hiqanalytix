@@ -11,53 +11,6 @@ const config = {
   enableHealthCheck: process.env.ENABLE_HEALTH_CHECK === "true",
 };
 
-function makeDevServerV5Compatible(devServerConfig) {
-  const {
-    https,
-    onAfterSetupMiddleware,
-    onBeforeSetupMiddleware,
-    onListening,
-    setupMiddlewares,
-    ...compatibleConfig
-  } = devServerConfig;
-
-  compatibleConfig.server =
-    typeof https === "object"
-      ? { type: "https", options: https }
-      : https
-        ? "https"
-        : "http";
-  compatibleConfig.headers = {
-    ...compatibleConfig.headers,
-    "Cross-Origin-Resource-Policy": "same-origin",
-  };
-
-  if (onBeforeSetupMiddleware || setupMiddlewares) {
-    compatibleConfig.setupMiddlewares = (middlewares, devServer) => {
-      if (onBeforeSetupMiddleware) {
-        onBeforeSetupMiddleware(devServer);
-      }
-
-      return setupMiddlewares
-        ? setupMiddlewares(middlewares, devServer)
-        : middlewares;
-    };
-  }
-
-  compatibleConfig.onListening = (devServer) => {
-    devServer.close ??= (callback) => devServer.stopCallback(callback);
-
-    if (onListening) {
-      onListening(devServer);
-    }
-    if (onAfterSetupMiddleware) {
-      onAfterSetupMiddleware(devServer);
-    }
-  };
-
-  return compatibleConfig;
-}
-
 // Conditionally load health check modules only if enabled
 let WebpackHealthPlugin;
 let setupHealthEndpoints;
@@ -108,44 +61,56 @@ let webpackConfig = {
 };
 
 webpackConfig.devServer = (devServerConfig) => {
+  const { https, setupMiddlewares, ...rest } = devServerConfig;
+
+  // Convert to v5 compatible config
+  const compatibleConfig = {
+    ...rest,
+    server:
+      typeof https === "object"
+        ? { type: "https", options: https }
+        : https
+          ? "https"
+          : "http",
+    headers: {
+      ...rest.headers,
+      "Cross-Origin-Resource-Policy": "same-origin",
+    },
+  };
+
   // Add health check endpoints if enabled
   if (config.enableHealthCheck && setupHealthEndpoints && healthPluginInstance) {
-    const originalSetupMiddlewares = devServerConfig.setupMiddlewares;
+    const originalSetupMiddlewares = setupMiddlewares;
 
-    devServerConfig.setupMiddlewares = (middlewares, devServer) => {
-      // Call original setup if exists
+    compatibleConfig.setupMiddlewares = (middlewares, devServer) => {
       if (originalSetupMiddlewares) {
         middlewares = originalSetupMiddlewares(middlewares, devServer);
       }
 
-      // Setup health endpoints
       setupHealthEndpoints(devServer, healthPluginInstance);
 
       return middlewares;
     };
   }
 
-  return devServerConfig;
+  return compatibleConfig;
 };
 
 // Wrap with visual edits (automatically adds babel plugin, dev server, and overlay in dev mode)
-if (isDevServer) {
-  try {
-    const { withVisualEdits } = require("@emergentbase/visual-edits/craco");
-    webpackConfig = withVisualEdits(webpackConfig);
-  } catch (err) {
-    if (err.code === 'MODULE_NOT_FOUND' && err.message.includes('@emergentbase/visual-edits/craco')) {
-      console.warn(
-        "[visual-edits] @emergentbase/visual-edits not installed — visual editing disabled."
-      );
-    } else {
-      throw err;
-    }
-  }
-}
-
-const configureDevServer = webpackConfig.devServer;
-webpackConfig.devServer = (devServerConfig) =>
-  makeDevServerV5Compatible(configureDevServer(devServerConfig));
+// DISABLED: Causes webpack-dev-server v5 compatibility issues
+// if (isDevServer) {
+//   try {
+//     const { withVisualEdits } = require("@emergentbase/visual-edits/craco");
+//     webpackConfig = withVisualEdits(webpackConfig);
+//   } catch (err) {
+//     if (err.code === 'MODULE_NOT_FOUND' && err.message.includes('@emergentbase/visual-edits/craco')) {
+//       console.warn(
+//         "[visual-edits] @emergentbase/visual-edits not installed — visual editing disabled."
+//       );
+//     } else {
+//       throw err;
+//     }
+//   }
+// }
 
 module.exports = webpackConfig;

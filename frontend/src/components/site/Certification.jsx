@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
     ArrowUpRight,
     CheckCircle,
-    DownloadSimple,
     FilePdf,
     SealCheck,
     X,
@@ -34,10 +33,10 @@ export default function Certification() {
             <section
                 id="credentials"
                 data-testid="certification-section"
-                className="relative overflow-hidden border-y border-neutral-800 bg-neutral-950 py-24 text-white md:py-32"
+                className="relative overflow-hidden border-y border-neutral-800 bg-neutral-950 py-16 text-white md:py-20"
             >
                 <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-brand/20 blur-3xl" />
-                <div className="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
+                <div className="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-brand/10 blur-3xl" />
 
                 <div className="relative mx-auto grid max-w-7xl gap-14 px-6 lg:grid-cols-12 lg:items-center lg:gap-20 lg:px-10">
                     <motion.div
@@ -47,22 +46,21 @@ export default function Certification() {
                         transition={{ duration: 0.7 }}
                         className="lg:col-span-5"
                     >
-                        <div className="mb-7 inline-flex items-center gap-2 border border-white/15 bg-white/5 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] text-emerald-300">
+                        <div className="mb-7 inline-flex items-center gap-2 border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-brand">
                             <SealCheck size={16} weight="duotone" />
-                            Verified credentials
+                            Verified recognition
                         </div>
-                        <h2 className="font-display text-4xl font-extrabold leading-tight md:text-6xl">
-                            Built with ambition. <span className="text-emerald-300">Recognised by design.</span>
+                        <h2                         className="font-display text-4xl font-extrabold leading-tight md:text-5xl">
+                            Built with ambition. <span className="text-brand">Recognised by design.</span>
                         </h2>
                         <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 md:text-lg">
                             HARVESTIQ LLP is officially recognised under the Startup India initiative.
-                            View the certificate directly and get confidence in the team behind your
-                            next data and automation transformation.
+                            Hover over the certificate to view the full document.
                         </p>
                         <div className="mt-8 grid gap-3 sm:grid-cols-2">
                             {["Official Startup India recognition", "Easy to verify and share"].map((item) => (
                                 <div key={item} className="flex items-center gap-2 text-sm text-white/80">
-                                    <CheckCircle size={18} weight="duotone" className="flex-none text-emerald-300" />
+                                    <CheckCircle size={18} weight="duotone" className="flex-none text-brand" />
                                     {item}
                                 </div>
                             ))}
@@ -76,8 +74,8 @@ export default function Certification() {
                         transition={{ duration: 0.7, delay: 0.1 }}
                         className="lg:col-span-7"
                     >
-                        <div className="relative mx-auto max-w-2xl">
-                            <div className="absolute -inset-3 border border-emerald-300/20" />
+                        <div className="relative mx-auto max-w-xl">
+                            <div className="absolute -inset-3 border border-brand/20" />
                             <div className="relative border border-white/15 bg-white/[0.07] p-3 shadow-2xl shadow-black/30 backdrop-blur">
                                 <div className="relative aspect-[1.414/1] overflow-hidden bg-white">
                                     <iframe
@@ -92,37 +90,19 @@ export default function Certification() {
                                         aria-label="Open Startup India certificate"
                                     >
                                         <span className="inline-flex items-center gap-2 bg-white px-5 py-3 text-sm font-semibold text-neutral-950 shadow-xl">
-                                            View certificate <ArrowUpRight size={16} weight="bold" />
+                                            View full certificate <ArrowUpRight size={16} weight="bold" />
                                         </span>
                                     </button>
                                 </div>
-                                <div className="flex flex-col gap-4 px-2 pb-1 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-3 px-2 pb-1 pt-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center bg-emerald-300/15 text-emerald-300">
+                                        <div className="flex h-10 w-10 items-center justify-center bg-brand/15 text-brand">
                                             <FilePdf size={22} weight="duotone" />
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-white">Startup India Certificate</p>
                                             <p className="mt-0.5 text-xs text-white/50">Official document · PDF</p>
                                         </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsOpen(true)}
-                                            data-testid="certificate-view-button"
-                                            className="inline-flex items-center justify-center gap-2 border border-white/20 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:border-emerald-300 hover:text-emerald-300"
-                                        >
-                                            View certificate
-                                        </button>
-                                        <a
-                                            href={certificateUrl}
-                                            download="startup-india-certificate.pdf"
-                                            data-testid="certificate-download-link"
-                                            className="inline-flex items-center justify-center gap-2 bg-emerald-300 px-4 py-2.5 text-xs font-semibold text-neutral-950 transition-colors hover:bg-white"
-                                        >
-                                            <DownloadSimple size={15} weight="bold" /> Download
-                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -154,7 +134,7 @@ export default function Certification() {
                                     href={certificateUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="hidden items-center gap-2 border border-white/15 px-3 py-2 text-xs text-white/80 hover:border-emerald-300 hover:text-emerald-300 sm:inline-flex"
+                                    className="hidden items-center gap-2 border border-white/15 px-3 py-2 text-xs text-white/80 hover:border-brand hover:text-brand sm:inline-flex"
                                 >
                                     Open in new tab <ArrowUpRight size={14} />
                                 </a>

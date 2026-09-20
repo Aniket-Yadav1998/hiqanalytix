@@ -41,7 +41,7 @@ export default function ClientsStrip() {
             className="relative border-y border-neutral-200 bg-white py-10"
         >
             <div className="mx-auto mb-6 max-w-7xl px-6 lg:px-10">
-                <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-neutral-700">
+                <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-neutral-700">
                     Trusted by operators across five industries
                 </p>
             </div>

@@ -21,11 +21,11 @@ export default function HeroDashboardMock() {
                 transition={{ delay: 0.7, duration: 0.6 }}
                 className="absolute -left-6 top-8 z-20 border border-neutral-200 bg-white px-3 py-2 shadow-lg"
             >
-                <div className="text-[10px] uppercase tracking-widest text-neutral-500">Revenue</div>
+                <div className="text-xs uppercase tracking-widest text-neutral-500">Revenue</div>
                 <div className="mt-0.5 font-display text-xl font-bold text-neutral-900">
                     € 12.4M
                 </div>
-                <div className="mt-0.5 text-[10px] text-emerald-600">▲ 18.2%</div>
+                <div className="mt-0.5 text-xs text-brand-dark">▲ 18.2%</div>
             </motion.div>
 
             <motion.div
@@ -34,9 +34,9 @@ export default function HeroDashboardMock() {
                 transition={{ delay: 1.0, duration: 0.6 }}
                 className="absolute -right-4 top-40 z-20 border border-brand-light bg-brand px-3 py-2 text-white shadow-xl"
             >
-                <div className="text-[10px] uppercase tracking-widest opacity-80">Automations</div>
+                <div className="text-xs uppercase tracking-widest opacity-80">Automations</div>
                 <div className="mt-0.5 font-display text-xl font-bold">2,148 hrs</div>
-                <div className="mt-0.5 text-[10px] opacity-90">reclaimed this Q</div>
+                <div className="mt-0.5 text-xs opacity-90">reclaimed this Q</div>
             </motion.div>
 
             <motion.div
@@ -45,7 +45,7 @@ export default function HeroDashboardMock() {
                 transition={{ delay: 1.3, duration: 0.6 }}
                 className="absolute -bottom-4 -left-2 z-20 border border-neutral-200 bg-white px-3 py-2 shadow-lg"
             >
-                <div className="text-[10px] uppercase tracking-widest text-neutral-500">Uptime</div>
+                <div className="text-xs uppercase tracking-widest text-neutral-500">Uptime</div>
                 <div className="mt-0.5 font-display text-xl font-bold text-neutral-900">99.98%</div>
             </motion.div>
 
@@ -61,10 +61,10 @@ export default function HeroDashboardMock() {
                     <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
                     <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
                     <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-                    <div className="ml-3 flex-1 truncate text-[11px] text-neutral-500">
+                    <div className="ml-3 flex-1 truncate text-xs text-neutral-500">
                         HARVESTIQ LLP / dashboards / executive
                     </div>
-                    <span className="border border-brand-light bg-brand-light px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-brand-dark">
+                    <span className="border border-brand-light bg-brand-light px-2 py-0.5 text-xs font-semibold uppercase tracking-widest text-brand-dark">
                         Live
                     </span>
                 </div>
@@ -79,13 +79,13 @@ export default function HeroDashboardMock() {
                             transition={{ delay: 0.4 + i * 0.1, duration: 0.5 }}
                             className="border border-neutral-100 bg-neutral-50 p-3"
                         >
-                            <div className="text-[9px] uppercase tracking-widest text-neutral-500">
+                            <div className="text-xs uppercase tracking-widest text-neutral-500">
                                 {k}
                             </div>
                             <div className="mt-1 font-display text-base font-bold text-neutral-900">
                                 {["€ 3.4M", "78.4%", "412"][i]}
                             </div>
-                            <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-600">
+                            <div className="mt-1 flex items-center gap-1 text-xs text-brand-dark">
                                 ▲ {[12.3, 8.4, 3.1][i]}%
                             </div>
                         </motion.div>
@@ -96,14 +96,14 @@ export default function HeroDashboardMock() {
                 <div className="border-b border-neutral-200 p-5">
                     <div className="flex items-end justify-between">
                         <div>
-                            <div className="text-[10px] uppercase tracking-widest text-neutral-500">
+                            <div className="text-xs uppercase tracking-widest text-neutral-500">
                                 Q4 · monthly performance
                             </div>
                             <div className="mt-1 font-display text-sm font-bold text-neutral-900">
                                 Automation impact
                             </div>
                         </div>
-                        <div className="flex gap-3 text-[10px]">
+                        <div className="flex gap-3 text-xs">
                             <span className="inline-flex items-center gap-1 text-neutral-700">
                                 <span className="h-2 w-2 bg-neutral-300" /> Before
                             </span>
@@ -129,7 +129,7 @@ export default function HeroDashboardMock() {
                                         className="w-1/2 bg-brand"
                                     />
                                 </div>
-                                <span className="text-[9px] uppercase tracking-widest text-neutral-500">
+                                <span className="text-xs uppercase tracking-widest text-neutral-500">
                                     {["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan"][i]}
                                 </span>
                             </div>
@@ -140,7 +140,7 @@ export default function HeroDashboardMock() {
                 {/* Sparkline */}
                 <div className="flex items-center justify-between p-5">
                     <div>
-                        <div className="text-[10px] uppercase tracking-widest text-neutral-500">
+                        <div className="text-xs uppercase tracking-widest text-neutral-500">
                             Cost saved (rolling 12w)
                         </div>
                         <div className="mt-1 font-display text-lg font-bold text-neutral-900">
