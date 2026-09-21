@@ -65,7 +65,8 @@
   "scripts": {
     "start": "craco start --host 0.0.0.0",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test",
+    "build:pages": "craco build && node scripts/copy-to-root.js"
   },
   "browserslist": {
     "production": [
