@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { PaperPlaneTilt, EnvelopeSimple, MapPin, CaretDown, Check, ShieldCheck } from "@phosphor-icons/react";
+import { PaperPlaneTilt, EnvelopeSimple, MapPin, CaretDown, Check, ShieldCheck, WarningCircle } from "@phosphor-icons/react";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -55,27 +56,44 @@ function randomCaptcha() {
     return { a: 1 + Math.floor(Math.random() * 9), b: 1 + Math.floor(Math.random() * 9) };
 }
 
-function validate(f, captchaSum) {
+function validate(f, captchaObj) {
     const errors = {};
     const country = countries.find((item) => item.code === f.country);
     const mobileDigits = f.phone.replace(/\D/g, "");
-    if (!/^[\p{L}]+(?:[ .'-][\p{L}]+)*$/u.test(f.name.trim()) || f.name.trim().length < 2)
-        errors.name = "Use letters, spaces, apostrophes or hyphens only";
+    const captchaSum = captchaObj.a + captchaObj.b;
+    
+    // Name validation
+    const name = f.name.trim();
+    if (!name) {
+        errors.name = "Full name is required";
+    } else if (name.length < 2) {
+        errors.name = "Name must be at least 2 characters";
+    } else if (!/^[\p{L}]+(?:[ .'-][\p{L}]+)*$/u.test(name)) {
+        errors.name = "Name can only contain letters, spaces, apostrophes, and hyphens";
+    }
+
+    // Email validation
     const email = f.email.trim();
     const emailParts = email.split("@");
     const emailLocal = emailParts[0] || "";
     const emailDomain = emailParts[1] || "";
-    if (
-        !emailPattern.test(email) ||
-        email.length > 254 ||
-        email.includes("..") ||
-        emailLocal.startsWith(".") ||
-        emailLocal.endsWith(".") ||
-        emailDomain.endsWith(".") ||
-        emailDomain.split(".").some((part) => part.length < 2)
-    ) {
-        errors.email = "Enter a valid business email address";
+    if (!email) {
+        errors.email = "Work email is required";
+    } else if (!emailPattern.test(email)) {
+        errors.email = "Enter a valid email format (e.g., jane@company.com)";
+    } else if (email.length > 254) {
+        errors.email = "Email is too long (max 254 characters)";
+    } else if (email.includes("..")) {
+        errors.email = "Email cannot contain consecutive dots";
+    } else if (emailLocal.startsWith(".") || emailLocal.endsWith(".")) {
+        errors.email = "Email local part cannot start or end with a dot";
+    } else if (emailDomain.endsWith(".") || emailDomain.split(".").some((part) => part.length < 2)) {
+        errors.email = "Email domain is invalid (each part must be at least 2 characters)";
+    } else if (!emailDomain.includes(".")) {
+        errors.email = "Email must include a domain (e.g., company.com)";
     }
+
+    // Country validation
     if (!country) {
         errors.country = "Select your country";
     } else {
@@ -83,27 +101,51 @@ function validate(f, captchaSum) {
         const minDigits = Math.min(...validLengths);
         const maxDigits = Math.max(...validLengths);
         const expected = validLengths.length === 1 ? `${validLengths[0]} digits` : `${minDigits}–${maxDigits} digits`;
-        
+
         if (!f.phone.trim()) {
-            errors.phone = `Mobile number is required`;
+            errors.phone = `Mobile number is required for ${country.name}`;
         } else if (!/^[\d\s()-]+$/.test(f.phone.trim())) {
-            errors.phone = `Enter a valid ${country.name} mobile number (${expected})`;
+            errors.phone = `Enter a valid ${country.name} mobile number (${expected}) — digits, spaces, parentheses, or dashes only`;
         } else if (mobileDigits.length < minDigits) {
-            errors.phone = `Mobile number too short — enter ${minDigits} digits`;
+            errors.phone = `Mobile number too short — ${country.name} requires ${minDigits} digits (you entered ${mobileDigits.length})`;
         } else if (mobileDigits.length > maxDigits) {
-            errors.phone = `Mobile number too long — enter ${maxDigits} digits`;
+            errors.phone = `Mobile number too long — ${country.name} allows max ${maxDigits} digits (you entered ${mobileDigits.length})`;
         } else if (!validLengths.includes(mobileDigits.length)) {
             errors.phone = `Enter a valid ${country.name} mobile number (${expected})`;
         }
     }
-    if (f.telephone && !/^[\d\s+()\-]{6,32}$/.test(f.telephone.trim()))
-        errors.telephone = "Enter a valid telephone number";
-    if (!industries.includes(f.industry)) errors.industry = "Select your industry";
-    if (!f.message.trim() || f.message.trim().length < 10) errors.message = "Message must be at least 10 characters";
-    if (f.message.length > 500) errors.message = "Message must not exceed 500 characters";
-    if (f.website.trim()) errors.website = "Unable to submit this form";
-    if (!f.captcha_answer.trim() || Number(f.captcha_answer.trim()) !== captchaSum)
-        errors.captcha_answer = "Solve the sum correctly to verify you're human";
+
+    // Telephone validation
+    if (f.telephone && f.telephone.trim() && !/^[\d\s+()\-]{6,32}$/.test(f.telephone.trim())) {
+        errors.telephone = "Enter a valid telephone number (6-32 characters, digits, spaces, +, -, parentheses only)";
+    }
+
+    // Industry validation
+    if (!industries.includes(f.industry)) {
+        errors.industry = `Please select your industry from: ${industries.join(", ")}`;
+    }
+
+    // Message validation
+    const message = f.message.trim();
+    if (!message) {
+        errors.message = "Problem statement is required";
+    } else if (message.length < 10) {
+        errors.message = `Message too short — at least 10 characters (currently ${message.length})`;
+    } else if (message.length > 500) {
+        errors.message = `Message too long — max 500 characters (currently ${message.length})`;
+    }
+
+    // Honeypot
+    if (f.website.trim()) {
+        errors.website = "Unable to submit this form";
+    }
+
+    // Captcha validation
+    if (!f.captcha_answer.trim()) {
+        errors.captcha_answer = "Please answer the math question to verify you're human";
+    } else if (Number(f.captcha_answer.trim()) !== captchaSum) {
+        errors.captcha_answer = "Please enter a valid answer";
+    }
     return errors;
 }
 
@@ -113,6 +155,7 @@ export default function Contact() {
     const [captcha, setCaptcha] = useState(randomCaptcha);
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
+    const [apiError, setApiError] = useState(null);
     const [countryOpen, setCountryOpen] = useState(false);
 
     const onChange = (e) => {
@@ -121,18 +164,24 @@ export default function Contact() {
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
     };
 
+    const validateField = (name) => {
+        const error = validate(form, captcha)[name];
+        setErrors((current) => ({ ...current, [name]: error }));
+    };
+
     const selectedCountry = countries.find((country) => country.code === form.country) || countries[0];
-    const formIsValid = Object.keys(validate(form, captcha.a + captcha.b)).length === 0;
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        const errs = validate(form, captcha.a + captcha.b);
+        const errs = validate(form, captcha);
         if (Date.now() - formStartedAt < 2500) errs.form = "Please take a moment to review your details";
         if (Object.keys(errs).length) {
             setErrors(errs);
+            setApiError(null);
             toast.error("Please fix the highlighted fields");
             return;
         }
+        setApiError(null);
         try {
             setSubmitting(true);
             const country = countries.find((item) => item.code === form.country);
@@ -153,11 +202,13 @@ export default function Contact() {
             setCaptcha(randomCaptcha());
         } catch (err) {
             const detail = err?.response?.data?.detail;
-            const msg = Array.isArray(detail)
-                ? detail.map((d) => d.msg).join(", ")
-                : typeof detail === "string"
-                ? detail
-                : "Something went wrong. Please try again.";
+            let msg = "Something went wrong. Please try again.";
+            if (Array.isArray(detail)) {
+                msg = detail.join(", ");
+            } else if (typeof detail === "string") {
+                msg = detail;
+            }
+            setApiError(msg);
             toast.error(msg);
         } finally {
             setSubmitting(false);
@@ -181,6 +232,7 @@ export default function Contact() {
                             rows={5}
                             value={form[name]}
                             onChange={onChange}
+                            onBlur={() => validateField(name)}
                             placeholder={placeholder}
                             maxLength={MAX_MESSAGE_LENGTH}
                             data-testid={`contact-input-${name}`}
@@ -201,6 +253,7 @@ export default function Contact() {
                         name={name}
                         value={form[name]}
                         onChange={onChange}
+                        onBlur={() => validateField(name)}
                         placeholder={placeholder}
                         autoComplete="off"
                         data-testid={`contact-input-${name}`}
@@ -298,6 +351,7 @@ export default function Contact() {
                                 name="website"
                                 value={form.website}
                                 onChange={onChange}
+                                onBlur={() => validateField("phone")}
                                 tabIndex="-1"
                                 autoComplete="off"
                                 aria-hidden="true"
@@ -355,6 +409,7 @@ export default function Contact() {
                                         name="phone"
                                         value={form.phone}
                                         onChange={onChange}
+                                        onBlur={() => validateField("phone")}
                                         placeholder="Mobile number"
                                         inputMode="numeric"
                                         autoComplete="tel-national"
@@ -376,6 +431,7 @@ export default function Contact() {
                                     name="industry"
                                     value={form.industry}
                                     onChange={onChange}
+                                    onBlur={() => validateField("industry")}
                                     data-testid="contact-input-industry"
                                     className={`w-full border bg-white px-4 py-3 text-neutral-900 focus:outline-none focus:ring-1 ${
                                         errors.industry ? "border-red-400 focus:ring-red-300" : "border-neutral-300 focus:border-orange-500 focus:ring-orange-300"
@@ -424,18 +480,25 @@ export default function Contact() {
                             </p>
                         )}
                         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 pt-6">
+                            {apiError && (
+                                <div className="w-full md:w-auto flex-1">
+                                    <p className="text-sm text-red-500 flex items-center gap-1.5" data-testid="contact-api-error">
+                                        <WarningCircle size={14} weight="duotone" />
+                                        {apiError}
+                                    </p>
+                                </div>
+                            )}
                             <p className="text-xs text-neutral-700">
                                 By submitting, you agree to be contacted about your enquiry.
                             </p>
-                            <button
+                            <InteractiveHoverButton
                                 type="submit"
-                                disabled={submitting || !formIsValid}
+                                text={submitting ? "Sending…" : "Send message"}
+                                disabled={submitting}
                                 data-testid="contact-submit-btn"
-                                className="group inline-flex items-center gap-2 bg-orange-500 px-6 py-3.5 font-medium text-white transition-colors duration-200 hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {submitting ? "Sending…" : "Send message"}
-                                <PaperPlaneTilt size={18} weight="bold" className="transition-transform duration-200 group-hover:translate-x-1" />
-                            </button>
+                                size="xl"
+                                variant="primary"
+                            />
                         </div>
                     </motion.form>
                 </div>

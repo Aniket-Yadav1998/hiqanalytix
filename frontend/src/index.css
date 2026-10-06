@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global list reset to prevent bullet points appearing on buttons/containers */
+ul, ol {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+li {
+  list-style: none !important;
+}
+
+/* Ensure buttons never show list markers - only target list-style properties */
+button {
+  list-style: none !important;
+  list-style-type: none !important;
+  list-style-image: none !important;
+  list-style-position: outside !important;
+}
+button::marker {
+  display: none !important;
+  content: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Prevent any element inside button from showing markers */
+button * {
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+/* Additional aggressive fix for buttons in flex containers */
+[class*="flex"] > button,
+[class*="flex"] > button::marker,
+[class*="gap"] > button,
+[class*="gap"] > button::marker {
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
 html {
     background-color: #F7FAF7;
     scrollbar-color: #1E5E29 #DDEBDD;

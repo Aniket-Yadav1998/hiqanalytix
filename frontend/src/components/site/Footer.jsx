@@ -60,6 +60,13 @@ export default function Footer() {
                             >
                                 connect@hiqanalytix.com
                             </a>
+                            <a
+                                href="https://hiqanalytix.com"
+                                className="mt-3 block max-w-sm text-sm leading-relaxed text-neutral-700 underline decoration-neutral-300 underline-offset-4 transition-colors hover:text-brand-dark hover:decoration-brand"
+                                aria-label="HARVESTIQ LLP website hiqanalytix.com"
+                            >
+                                hiqanalytix.com
+                            </a>
                         </div>
                     </div>
 

@@ -54,6 +54,20 @@ export default function Services() {
             className="relative border-t border-neutral-100 bg-neutral-50 pb-16 pt-24 md:pb-20 md:pt-32"
         >
             <div className="mx-auto max-w-7xl px-6 lg:px-10">
+                {/* Video above What we do section - Full width */}
+                <div className="-mx-6 mt-8 mb-12 lg:-mx-10 lg:mt-12 lg:mb-16">
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full rounded-none lg:rounded-2xl shadow-xl border border-neutral-200"
+                        style={{ objectFit: 'cover', maxHeight: '500px' }}
+                    >
+                        <source src="/video_04a6d133.mp4" type="video/mp4" />
+                    </video>
+                </div>
+
                 <div className="grid gap-10 md:grid-cols-12 md:gap-16">
                     <div className="col-span-12 md:col-span-6">
                         <span data-testid="services-eyebrow" className="text-xs uppercase tracking-[0.25em] text-orange-600">

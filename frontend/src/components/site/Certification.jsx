@@ -55,7 +55,7 @@ export default function Certification() {
                         </h2>
                         <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 md:text-lg">
                             HARVESTIQ LLP is officially recognised under the Startup India initiative.
-                            Hover over the certificate to view the full document.
+                            Tap the certificate to view the full document.
                         </p>
                         <div className="mt-8 grid gap-3 sm:grid-cols-2">
                             {["Official Startup India recognition", "Easy to verify and share"].map((item) => (
@@ -77,21 +77,46 @@ export default function Certification() {
                         <div className="relative mx-auto max-w-xl">
                             <div className="absolute -inset-3 border border-brand/20" />
                             <div className="relative border border-white/15 bg-white/[0.07] p-3 shadow-2xl shadow-black/30 backdrop-blur">
-                                <div className="relative aspect-[1.414/1] overflow-hidden bg-white">
+                                {/* Desktop preview: inline PDF works on desktop browsers */}
+                                <div className="relative hidden aspect-[1.414/1] overflow-hidden bg-white sm:block">
                                     <iframe
                                         title="Startup India certificate preview"
                                         src={`${certificateUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                                         className="h-full w-full"
+                                        loading="lazy"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setIsOpen(true)}
-                                        className="absolute inset-0 flex items-center justify-center bg-neutral-950/0 opacity-0 transition-all duration-300 hover:bg-neutral-950/45 hover:opacity-100 focus:bg-neutral-950/45 focus:opacity-100"
+                                        className="absolute inset-0 flex items-center justify-center bg-neutral-950/0 opacity-0 transition-all duration-300 hover:bg-neutral-950/45 hover:opacity-100 focus:bg-neutral-950/45 focus:opacity-100 focus-visible:opacity-100 active:bg-neutral-950/45 active:opacity-100"
                                         aria-label="Open Startup India certificate"
                                     >
                                         <span className="inline-flex items-center gap-2 bg-white px-5 py-3 text-sm font-semibold text-neutral-950 shadow-xl">
                                             View full certificate <ArrowUpRight size={16} weight="bold" />
                                         </span>
+                                    </button>
+                                </div>
+                                {/* Mobile fallback: mobile browsers can't render PDFs in iframes,
+                                    so show a tap-friendly card that opens the viewer instead */}
+                                <div className="relative flex flex-col items-center gap-4 bg-white px-6 py-10 text-center sm:hidden">
+                                    <div className="flex h-16 w-16 items-center justify-center bg-brand/10 text-brand">
+                                        <FilePdf size={32} weight="duotone" />
+                                    </div>
+                                    <div>
+                                        <p className="text-base font-semibold text-neutral-950">
+                                            Startup India Certificate
+                                        </p>
+                                        <p className="mt-1 text-sm text-neutral-500">
+                                            Official document · PDF
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsOpen(true)}
+                                        className="inline-flex items-center gap-2 bg-neutral-950 px-5 py-3 text-sm font-semibold text-white shadow-xl active:bg-neutral-800"
+                                        aria-label="Open Startup India certificate"
+                                    >
+                                        View full certificate <ArrowUpRight size={16} weight="bold" />
                                     </button>
                                 </div>
                                 <div className="flex items-center gap-3 px-2 pb-1 pt-4">
@@ -134,7 +159,7 @@ export default function Certification() {
                                     href={certificateUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="hidden items-center gap-2 border border-white/15 px-3 py-2 text-xs text-white/80 hover:border-brand hover:text-brand sm:inline-flex"
+                                    className="inline-flex items-center gap-2 border border-white/15 px-3 py-2 text-xs text-white/80 hover:border-brand hover:text-brand"
                                 >
                                     Open in new tab <ArrowUpRight size={14} />
                                 </a>

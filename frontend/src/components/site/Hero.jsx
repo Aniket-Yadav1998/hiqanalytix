@@ -2,7 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkle } from "@phosphor-icons/react";
 import HeroAutomationFlow from "@/components/site/HeroAutomationFlow";
-import { Button } from "@/components/ui/button";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
 const rotators = [
     "Power BI dashboards",
@@ -113,31 +113,21 @@ export default function Hero() {
                         decision-makers who need trusted answers in hours, not months.
                     </p>
 
-                    <div className="mt-10 flex flex-wrap items-center gap-4">
-                        <Button
-                            asChild
-                            variant="primary"
-                            size="xl"
+                    <div className="mt-10 flex flex-wrap items-center gap-4 list-none" style={{ listStyle: 'none' }}>
+                        <InteractiveHoverButton
+                            text="Start a conversation"
+                            onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}
                             data-testid="hero-cta-primary"
-                        >
-                            <a
-                                href="#contact"
-                                className="group inline-flex items-center gap-2 px-6 py-3.5"
-                            >
-                                Start a conversation
-                                <ArrowRight size={18} weight="bold" className="transition-transform duration-200 group-hover:translate-x-1" />
-                            </a>
-                        </Button>
-                        <Button
-                            asChild
-                            variant="secondary-alt"
                             size="xl"
+                            variant="primary"
+                        />
+                        <InteractiveHoverButton
+                            text="Calculate your ROI"
+                            onClick={() => document.getElementById("roi")?.scrollIntoView({ behavior: "smooth" })}
                             data-testid="hero-cta-secondary"
-                        >
-                            <a href="#roi" className="inline-flex items-center gap-2 px-6 py-3.5">
-                                Calculate your ROI
-                            </a>
-                        </Button>
+                            size="xl"
+                            variant="secondary"
+                        />
                     </div>
 
                     {/* Trust ribbons */}

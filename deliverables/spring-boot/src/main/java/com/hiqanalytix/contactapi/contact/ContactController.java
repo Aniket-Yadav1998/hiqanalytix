@@ -188,14 +188,27 @@ public class ContactController {
 
     private String csvRow(String... values) {
         return java.util.Arrays.stream(values)
-                .map(value -> "\"" + (value == null ? "" : value.replace("\"", "\"\"")) + "\"")
+                .map(value -> "\"" + spreadsheetSafe(value).replace("\"", "\"\"") + "\"")
                 .collect(java.util.stream.Collectors.joining(",")) + "\n";
     }
 
     private String tsvRow(String... values) {
         return java.util.Arrays.stream(values)
-                .map(value -> value == null ? "" : value.replace("\t", " ").replace("\r", " ").replace("\n", " "))
+                .map(value -> spreadsheetSafe(value).replace("\t", " ").replace("\r", " ").replace("\n", " "))
                 .collect(java.util.stream.Collectors.joining("\t")) + "\n";
+    }
+
+    private String spreadsheetSafe(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+
+        String leadingWhitespaceTrimmed = value.stripLeading();
+        if (!leadingWhitespaceTrimmed.isEmpty()
+                && "=+-@".indexOf(leadingWhitespaceTrimmed.charAt(0)) >= 0) {
+            return "'" + value;
+        }
+        return value;
     }
 
 

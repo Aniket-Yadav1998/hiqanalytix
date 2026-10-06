@@ -1,6 +1,19 @@
 // craco.config.js
 const path = require("path");
-require("dotenv").config();
+const dotenv = require("dotenv");
+const nodeEnv = process.env.NODE_ENV || "development";
+// react-scripts loads .env files itself, but it never overrides variables
+// already present in process.env. Since this config file is evaluated first,
+// a plain dotenv.config() would pin .env values and silently shadow
+// .env.production during builds (this once baked localhost:8001 into the
+// live bundle). Replicate react-scripts' precedence so builds pick up
+// .env.production correctly.
+dotenv.config();
+if (nodeEnv !== "test") {
+  dotenv.config({ path: path.resolve(__dirname, `.env.${nodeEnv}`), override: true });
+  dotenv.config({ path: path.resolve(__dirname, ".env.local"), override: true });
+  dotenv.config({ path: path.resolve(__dirname, `.env.${nodeEnv}.local`), override: true });
+}
 
 // Check if we're in development/preview mode (not production build)
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build

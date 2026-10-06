@@ -3,9 +3,9 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
-import { Calculator, TrendDown, UsersThree, Clock, ChartLineUp, Lightning } from "@phosphor-icons/react";
+import { Calculator, TrendDown, UsersThree, Clock, ChartLineUp, Lightning, WarningCircle } from "@phosphor-icons/react";
 import useCountUp from "@/hooks/useCountUp";
-import { Button } from "@/components/ui/button";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -24,30 +24,76 @@ const initial = {
 
 function validate(f) {
     const errors = {};
-    if (!f.name.trim() || f.name.trim().length < 2) errors.name = "Please enter your name";
+    const name = f.name.trim();
+    if (!name) {
+        errors.name = "Full name is required";
+    } else if (name.length < 2) {
+        errors.name = "Name must be at least 2 characters";
+    } else if (!/^[\p{L}]+(?:[ .'-][\p{L}]+)*$/u.test(name)) {
+        errors.name = "Name can only contain letters, spaces, apostrophes, and hyphens";
+    }
+
     const email = f.email.trim();
     const emailParts = email.split("@");
     const emailLocal = emailParts[0] || "";
     const emailDomain = emailParts[1] || "";
-    if (
-        !emailPattern.test(email) ||
-        email.length > 254 ||
-        email.includes("..") ||
-        emailLocal.startsWith(".") ||
-        emailLocal.endsWith(".") ||
-        emailDomain.endsWith(".") ||
-        emailDomain.split(".").some((part) => part.length < 2)
-    ) {
-        errors.email = "Enter a valid business email address";
+    if (!email) {
+        errors.email = "Work email is required";
+    } else if (!emailPattern.test(email)) {
+        errors.email = "Enter a valid email format (e.g., jane@company.com)";
+    } else if (email.length > 254) {
+        errors.email = "Email is too long (max 254 characters)";
+    } else if (email.includes("..")) {
+        errors.email = "Email cannot contain consecutive dots";
+    } else if (emailLocal.startsWith(".") || emailLocal.endsWith(".")) {
+        errors.email = "Email local part cannot start or end with a dot";
+    } else if (emailDomain.endsWith(".") || emailDomain.split(".").some((part) => part.length < 2)) {
+        errors.email = "Email domain is invalid (each part must be at least 2 characters)";
+    } else if (!emailDomain.includes(".")) {
+        errors.email = "Email must include a domain (e.g., company.com)";
     }
-    if (!f.company.trim() || f.company.trim().length < 2) errors.company = "Company is required";
-    if (!industries.includes(f.industry)) errors.industry = "Pick an industry";
+
+    const company = f.company.trim();
+    if (!company) {
+        errors.company = "Company name is required";
+    } else if (company.length < 2) {
+        errors.company = "Company name must be at least 2 characters";
+    }
+
+    if (!industries.includes(f.industry)) {
+        errors.industry = `Please select your industry from: ${industries.join(", ")}`;
+    }
+
     const mp = Number(f.current_manpower);
-    if (!Number.isFinite(mp) || mp < 1) errors.current_manpower = "How many people today? (min 1)";
+    if (!f.current_manpower.trim()) {
+        errors.current_manpower = "Number of people is required";
+    } else if (!Number.isFinite(mp)) {
+        errors.current_manpower = "Enter a valid number";
+    } else if (mp < 1) {
+        errors.current_manpower = "Must be at least 1 person";
+    } else if (mp > 100000) {
+        errors.current_manpower = "Number seems too high (max 100,000)";
+    }
+
     const hr = Number(f.current_hours_per_week);
-    if (!Number.isFinite(hr) || hr < 1) errors.current_hours_per_week = "Enter total hours per person each week";
-    if (!f.current_tools.trim() || f.current_tools.trim().length < 2)
-        errors.current_tools = "List the main tools you use today";
+    if (!f.current_hours_per_week.trim()) {
+        errors.current_hours_per_week = "Hours per week is required";
+    } else if (!Number.isFinite(hr)) {
+        errors.current_hours_per_week = "Enter a valid number";
+    } else if (hr < 1) {
+        errors.current_hours_per_week = "Must be at least 1 hour per week";
+    } else if (hr > 10000) {
+        errors.current_hours_per_week = "Hours per week seems too high (max 10,000)";
+    }
+
+    const tools = f.current_tools.trim();
+    if (!tools) {
+        errors.current_tools = "Please list the tools you currently use";
+    } else if (tools.length < 2) {
+        errors.current_tools = "Be more specific — at least 2 characters";
+    } else if (tools.length > 400) {
+        errors.current_tools = "Tools description too long (max 400 characters)";
+    }
     return errors;
 }
 
@@ -60,6 +106,7 @@ export default function RoiCalculator() {
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState(null);
+    const [apiError, setApiError] = useState(null);
     const formIsValid = Object.keys(validate(form)).length === 0;
 
     const onChange = (e) => {
@@ -73,9 +120,11 @@ export default function RoiCalculator() {
         const errs = validate(form);
         if (Object.keys(errs).length) {
             setErrors(errs);
+            setApiError(null);
             toast.error("Please fix the highlighted fields");
             return;
         }
+        setApiError(null);
         try {
             setSubmitting(true);
             const payload = {
@@ -88,11 +137,13 @@ export default function RoiCalculator() {
             toast.success("Estimate ready — see your projected savings below.");
         } catch (err) {
             const detail = err?.response?.data?.detail;
-            const msg = Array.isArray(detail)
-                ? detail.map((d) => d.msg).join(", ")
-                : typeof detail === "string"
-                ? detail
-                : "Something went wrong. Please try again.";
+            let msg = "Something went wrong. Please try again.";
+            if (Array.isArray(detail)) {
+                msg = detail.join(", ");
+            } else if (typeof detail === "string") {
+                msg = detail;
+            }
+            setApiError(msg);
             toast.error(msg);
         } finally {
             setSubmitting(false);
@@ -185,20 +236,24 @@ export default function RoiCalculator() {
                         </label>
 
                         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 pt-6">
+                            {apiError && (
+                                <div className="w-full md:w-auto flex-1">
+                                    <p className="text-sm text-red-500 flex items-center gap-1.5" data-testid="roi-api-error">
+                                        <WarningCircle size={14} weight="duotone" />
+                                        {apiError}
+                                    </p>
+                                </div>
+                            )}
                             <p className="text-xs text-neutral-700">
                                 We save every submission securely. You&apos;ll only be contacted about this enquiry.
                             </p>
-                            <Button
+                            <InteractiveHoverButton
                                 type="submit"
-                                variant="accent"
-                                size="xl"
+                                text={submitting ? "Calculating…" : "Show estimated savings"}
                                 disabled={submitting || !formIsValid}
                                 data-testid="roi-submit-btn"
                                 className="w-full md:w-auto"
-                            >
-                                {submitting ? "Calculating…" : "Show estimated savings"}
-                                <Calculator size={18} weight="bold" />
-                            </Button>
+                            />
                         </div>
                     </motion.form>
                 </div>

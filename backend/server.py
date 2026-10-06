@@ -6,12 +6,14 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 import re
+import secrets
 import asyncio
 import time
+import math
 from html import escape as html_escape
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 import uuid
 from datetime import datetime, timezone
 
@@ -37,11 +39,63 @@ db = client[os.environ['DB_NAME']]
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "").strip()
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev").strip()
 SALES_EMAIL = os.environ.get("SALES_EMAIL", "").strip()
+INSIGHTS_ADMIN_TOKEN = os.environ.get("INSIGHTS_ADMIN_TOKEN", "").strip()
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
     logger.info("Resend configured (sender=%s, sales=%s)", SENDER_EMAIL, SALES_EMAIL or "<unset>")
 else:
     logger.info("RESEND_API_KEY not set — lead email notifications disabled")
+
+# ---------- Rate Limit Configuration ----------
+# All thresholds configurable via environment variables
+def _parse_rate_limit_config(prefix: str, defaults: Dict[str, int]) -> Dict[str, int]:
+    """Parse rate limit config from env vars with fallback to defaults."""
+    result = {}
+    for key, default in defaults.items():
+        env_key = f"RATE_LIMIT_{prefix}_{key.upper()}"
+        try:
+            result[key] = int(os.environ.get(env_key, default))
+        except ValueError:
+            logger.warning("Invalid %s value, using default: %d", env_key, default)
+            result[key] = default
+    return result
+
+# Auth routes (strictest) - per IP + per account with exponential backoff
+_AUTH_RATE_DEFAULTS = {
+    "ip_window_seconds": 900,      # 15 min
+    "ip_max_requests": 5,          # 5 attempts per 15 min per IP
+    "account_window_seconds": 900,  # 15 min
+    "account_max_requests": 3,      # 3 attempts per 15 min per account
+    "backoff_base_seconds": 60,     # base backoff
+    "backoff_max_seconds": 3600,    # max 1 hour
+}
+AUTH_RATE_LIMIT = _parse_rate_limit_config("AUTH", _AUTH_RATE_DEFAULTS)
+
+# Public endpoints (contact, roi, newsletter) - moderate
+_PUBLIC_RATE_DEFAULTS = {
+    "contact": {"window_seconds": 300, "max_requests": 3},      # 3 per 5 min
+    "roi": {"window_seconds": 900, "max_requests": 5},          # 5 per 15 min
+    "newsletter": {"window_seconds": 900, "max_requests": 5},   # 5 per 15 min
+    "insights_get": {"window_seconds": 60, "max_requests": 30}, # 30 per min
+    "insights_post": {"window_seconds": 3600, "max_requests": 10}, # 10 per hour
+}
+PUBLIC_RATE_LIMITS = {}
+for endpoint, defaults in _PUBLIC_RATE_DEFAULTS.items():
+    PUBLIC_RATE_LIMITS[endpoint] = _parse_rate_limit_config(f"PUBLIC_{endpoint.upper()}", defaults)
+
+# Authenticated user actions (future) - looser
+_AUTHED_RATE_DEFAULTS = {
+    "window_seconds": 60,
+    "max_requests": 60,
+}
+AUTHED_RATE_LIMIT = _parse_rate_limit_config("AUTHED", _AUTHED_RATE_DEFAULTS)
+
+# Global DoS guard
+_GLOBAL_RATE_DEFAULTS = {
+    "window_seconds": 900,
+    "max_requests": 100,
+}
+GLOBAL_RATE_LIMIT = _parse_rate_limit_config("GLOBAL", _GLOBAL_RATE_DEFAULTS)
 
 _ENABLE_API_DOCS = os.environ.get("ENABLE_API_DOCS", "false").lower() == "true"
 app = FastAPI(
@@ -75,47 +129,125 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Global, in-memory, per-IP request throttle (single-process; resets on restart)."""
+class RateLimitStore:
+    """Thread-safe in-memory rate limit store with TTL cleanup."""
+    
+    def __init__(self):
+        self._buckets: Dict[str, List[float]] = {}
+        self._lock = asyncio.Lock()
+    
+    async def check_and_record(self, key: str, window_seconds: int, max_requests: int) -> Tuple[bool, int]:
+        """Check if request is allowed, record if so. Returns (allowed, retry_after_seconds)."""
+        async with self._lock:
+            now = time.monotonic()
+            bucket = self._buckets.get(key, [])
+            recent = [stamp for stamp in bucket if now - stamp < window_seconds]
+            
+            if len(recent) >= max_requests:
+                oldest = min(recent) if recent else now
+                retry_after = max(1, int(oldest + window_seconds - now))
+                return False, retry_after
+            
+            recent.append(now)
+            self._buckets[key] = recent
+            return True, 0
+    
+    async def get_attempt_count(self, key: str, window_seconds: int) -> int:
+        """Get current attempt count for a key within window."""
+        async with self._lock:
+            now = time.monotonic()
+            bucket = self._buckets.get(key, [])
+            recent = [stamp for stamp in bucket if now - stamp < window_seconds]
+            return len(recent)
+    
+    async def cleanup(self, max_age_seconds: int = 3600):
+        """Remove buckets older than max_age_seconds."""
+        async with self._lock:
+            now = time.monotonic()
+            self._buckets = {
+                k: [s for s in v if now - s < max_age_seconds]
+                for k, v in self._buckets.items()
+                if any(now - s < max_age_seconds for s in v)
+            }
 
-    def __init__(self, app, window_seconds: int, max_requests: int):
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Global DoS guard: configurable requests per window per IP."""
+
+    def __init__(self, app, window_seconds: int, max_requests: int, store: RateLimitStore = None):
         super().__init__(app)
         self.window_seconds = window_seconds
         self.max_requests = max_requests
-        self._buckets = {}
+        self._store = store or RateLimitStore()
 
     async def dispatch(self, request, call_next):
         client_ip = request.client.host if request.client else "unknown"
-        now = time.monotonic()
-        recent = [stamp for stamp in self._buckets.get(client_ip, []) if now - stamp < self.window_seconds]
-        if len(recent) >= self.max_requests:
+        allowed, retry_after = await self._store.check_and_record(
+            f"global:{client_ip}", self.window_seconds, self.max_requests
+        )
+        if not allowed:
             from starlette.responses import JSONResponse
-            return JSONResponse(status_code=429, content={"detail": "Too many requests. Please try again later."})
-        recent.append(now)
-        self._buckets[client_ip] = recent
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please try again later."},
+                headers={"Retry-After": str(retry_after)}
+            )
         return await call_next(request)
 
 
-def _enforce_rate_limit(buckets: dict, client_ip: str, window_seconds: int, max_requests: int):
-    now = time.monotonic()
-    recent = [stamp for stamp in buckets.get(client_ip, []) if now - stamp < window_seconds]
-    if len(recent) >= max_requests:
-        raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
-    recent.append(now)
-    buckets[client_ip] = recent
+def _calculate_backoff(attempt: int, base_seconds: int, max_seconds: int) -> int:
+    """Calculate exponential backoff with jitter."""
+    backoff = min(base_seconds * (2 ** (attempt - 1)), max_seconds)
+    jitter = backoff * 0.1 * (2 * (time.monotonic() % 1) - 1)  # ±10% jitter
+    return max(1, int(backoff + jitter))
+
+
+async def enforce_rate_limit(
+    store: RateLimitStore,
+    key: str,
+    window_seconds: int,
+    max_requests: int,
+    account_key: Optional[str] = None,
+    account_window_seconds: Optional[int] = None,
+    account_max_requests: Optional[int] = None,
+    backoff_base_seconds: Optional[int] = None,
+    backoff_max_seconds: Optional[int] = None,
+) -> Tuple[bool, int]:
+    """
+    Enforce rate limit with optional per-account limits and exponential backoff.
+    Returns (allowed, retry_after_seconds).
+    """
+    # Check IP-based limit
+    allowed, retry_after = await store.check_and_record(key, window_seconds, max_requests)
+    if not allowed:
+        return False, retry_after
+    
+    # Check account-based limit if provided
+    if account_key and account_window_seconds and account_max_requests:
+        account_allowed, account_retry = await store.check_and_record(
+            f"account:{account_key}", account_window_seconds, account_max_requests
+        )
+        if not account_allowed:
+            # Calculate exponential backoff based on attempt count
+            attempt = await store.get_attempt_count(f"account:{account_key}", account_window_seconds)
+            if backoff_base_seconds and backoff_max_seconds:
+                retry_after = _calculate_backoff(attempt, backoff_base_seconds, backoff_max_seconds)
+            return False, max(retry_after, account_retry)
+    
+    return True, 0
 
 
 app.add_middleware(SecurityHeadersMiddleware)
-# Global DoS guard: 100 requests / 15 minutes per IP across all routes.
-app.add_middleware(RateLimitMiddleware, window_seconds=900, max_requests=100)
-_contact_rate_limit = {}
-_CONTACT_WINDOW_SECONDS = 300
-_CONTACT_MAX_REQUESTS = 3
-# Stricter per-route limits for lead-generating / heavier endpoints: 5 requests / 15 minutes per IP.
-_roi_rate_limit = {}
-_newsletter_rate_limit = {}
-_STRICT_WINDOW_SECONDS = 900
-_STRICT_MAX_REQUESTS = 5
+# Global DoS guard: configurable requests per window per IP across all routes.
+_global_rate_limit_store = RateLimitStore()
+app.add_middleware(RateLimitMiddleware, window_seconds=GLOBAL_RATE_LIMIT["window_seconds"], max_requests=GLOBAL_RATE_LIMIT["max_requests"], store=_global_rate_limit_store)
+
+# Per-route rate limit stores
+_contact_rate_limit = RateLimitStore()
+_roi_rate_limit = RateLimitStore()
+_newsletter_rate_limit = RateLimitStore()
+_insights_get_rate_limit = RateLimitStore()
+_insights_post_rate_limit = RateLimitStore()
 _MOBILE_DIGITS = {
     "IN": {10}, "US": {10}, "CA": {10}, "GB": {10}, "DE": {10, 11},
     "FR": {9}, "IT": {9, 10}, "ES": {9}, "NL": {9}, "BE": {9},
@@ -137,6 +269,27 @@ _EMAIL_PATTERN = re.compile(
     r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$"
 )
 
+# XSS/Injection prevention patterns
+_HTML_TAG_PATTERN = re.compile(r"<[^>]*>")
+_SCRIPT_PATTERN = re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL)
+_SQL_INJECTION_PATTERN = re.compile(r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|OR|AND)\b.*\b(FROM|WHERE|TABLE)\b)", re.IGNORECASE)
+
+
+def _sanitize_text(v: str, max_length: int, field_name: str) -> str:
+    """Sanitize text input: strip, validate length, reject HTML/scripts/SQL."""
+    v = v.strip()
+    if not v:
+        raise ValueError(f"{field_name} must not be blank")
+    if len(v) > max_length:
+        raise ValueError(f"{field_name} exceeds maximum length of {max_length}")
+    if _HTML_TAG_PATTERN.search(v):
+        raise ValueError(f"{field_name} must not contain HTML tags")
+    if _SCRIPT_PATTERN.search(v):
+        raise ValueError(f"{field_name} must not contain scripts")
+    if _SQL_INJECTION_PATTERN.search(v):
+        raise ValueError(f"{field_name} contains invalid characters")
+    return v
+
 
 # ---------- Models ----------
 class ContactCreate(BaseModel):
@@ -151,13 +304,23 @@ class ContactCreate(BaseModel):
     form_started_at: Optional[int] = None
     human_confirmed: bool = False
 
-    @field_validator("name", "company", "message")
+    @field_validator("name")
     @classmethod
-    def strip_not_blank(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("must not be blank")
+    def validate_name(cls, v: str) -> str:
+        v = _sanitize_text(v, 120, "name")
+        if not re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ .'\-][A-Za-zÀ-ÖØ-öø-ÿ]+)*", v, re.UNICODE):
+            raise ValueError("name may contain letters, spaces, apostrophes, and hyphens only")
         return v
+
+    @field_validator("company")
+    @classmethod
+    def validate_company(cls, v: str) -> str:
+        return _sanitize_text(v, 160, "company")
+
+    @field_validator("message")
+    @classmethod
+    def validate_message(cls, v: str) -> str:
+        return _sanitize_text(v, 500, "message")
 
     @field_validator("email")
     @classmethod
@@ -177,13 +340,6 @@ class ContactCreate(BaseModel):
             raise ValueError("enter a valid business email address")
         return email.lower()
 
-    @field_validator("name")
-    @classmethod
-    def validate_name(cls, v: str) -> str:
-        if not re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ .'\-][A-Za-zÀ-ÖØ-öø-ÿ]+)*", v, re.UNICODE):
-            raise ValueError("name may contain letters, spaces, apostrophes, and hyphens only")
-        return v
-
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: str) -> str:
@@ -200,6 +356,12 @@ class ContactCreate(BaseModel):
         v = v.strip()
         if not re.match(r"^[\d\s+()\-]{6,32}$", v):
             raise ValueError("invalid telephone")
+        return v
+
+    @field_validator("website")
+    @classmethod
+    def validate_website(cls, v: str) -> str:
+        # Honeypot field - must be empty
         return v
 
 
@@ -223,6 +385,33 @@ class RoiCreate(BaseModel):
     current_manpower: int = Field(..., ge=1, le=100000)
     current_hours_per_week: int = Field(..., ge=1, le=10000)
     current_tools: str = Field(..., min_length=2, max_length=400)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        v = _sanitize_text(v, 120, "name")
+        if not re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ .'\-][A-Za-zÀ-ÖØ-öø-ÿ]+)*", v, re.UNICODE):
+            raise ValueError("name may contain letters, spaces, apostrophes, and hyphens only")
+        return v
+
+    @field_validator("company")
+    @classmethod
+    def validate_company(cls, v: str) -> str:
+        return _sanitize_text(v, 160, "company")
+
+    @field_validator("industry")
+    @classmethod
+    def validate_industry(cls, v: str) -> str:
+        allowed = {"Financial", "Automotive", "Engineering", "Energy", "Health", "Other"}
+        v = _sanitize_text(v, 40, "industry")
+        if v not in allowed:
+            raise ValueError("invalid industry")
+        return v
+
+    @field_validator("current_tools")
+    @classmethod
+    def validate_current_tools(cls, v: str) -> str:
+        return _sanitize_text(v, 400, "current_tools")
 
     @field_validator("email")
     @classmethod
@@ -278,6 +467,31 @@ class InsightCreate(BaseModel):
     category: str = Field(..., min_length=2, max_length=60)
     read_minutes: int = Field(default=6, ge=1, le=60)
     image_url: str = Field(default="", max_length=500)
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        return _sanitize_text(v, 200, "title")
+
+    @field_validator("excerpt")
+    @classmethod
+    def validate_excerpt(cls, v: str) -> str:
+        return _sanitize_text(v, 800, "excerpt")
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        return _sanitize_text(v, 60, "category")
+
+    @field_validator("image_url")
+    @classmethod
+    def validate_image_url(cls, v: str) -> str:
+        v = v.strip()
+        if v and not (v.startswith("http://") or v.startswith("https://")):
+            raise ValueError("image_url must be a valid HTTP/HTTPS URL")
+        if len(v) > 500:
+            raise ValueError("image_url exceeds maximum length of 500")
+        return v
 
 
 class NewsletterCreate(BaseModel):
@@ -422,7 +636,22 @@ async def create_contact(payload: ContactCreate, background_tasks: BackgroundTas
         raise HTTPException(status_code=400, detail="Please take a moment to review your details")
 
     client_ip = request.client.host if request.client else "unknown"
-    _enforce_rate_limit(_contact_rate_limit, client_ip, _CONTACT_WINDOW_SECONDS, _CONTACT_MAX_REQUESTS)
+    cfg = PUBLIC_RATE_LIMITS["contact"]
+    allowed, retry_after = await enforce_rate_limit(
+        _contact_rate_limit,
+        f"contact:ip:{client_ip}",
+        cfg["window_seconds"],
+        cfg["max_requests"],
+        account_key=payload.email.lower(),
+        account_window_seconds=cfg["window_seconds"],
+        account_max_requests=cfg["max_requests"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many submissions from this email. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
 
     contact = Contact(**payload.model_dump())
     doc = contact.model_dump()
@@ -458,7 +687,22 @@ def _compute_roi(manpower: int, hours: int) -> dict:
 @api_router.post("/roi-estimate", response_model=RoiLead, status_code=201)
 async def create_roi_estimate(payload: RoiCreate, background_tasks: BackgroundTasks, request: Request):
     client_ip = request.client.host if request.client else "unknown"
-    _enforce_rate_limit(_roi_rate_limit, client_ip, _STRICT_WINDOW_SECONDS, _STRICT_MAX_REQUESTS)
+    cfg = PUBLIC_RATE_LIMITS["roi"]
+    allowed, retry_after = await enforce_rate_limit(
+        _roi_rate_limit,
+        f"roi:ip:{client_ip}",
+        cfg["window_seconds"],
+        cfg["max_requests"],
+        account_key=payload.email.lower(),
+        account_window_seconds=cfg["window_seconds"],
+        account_max_requests=cfg["max_requests"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many estimates from this email. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
     computed = _compute_roi(payload.current_manpower, payload.current_hours_per_week)
     lead = RoiLead(**payload.model_dump(), **computed)
     doc = lead.model_dump()
@@ -479,7 +723,22 @@ async def create_roi_estimate(payload: RoiCreate, background_tasks: BackgroundTa
 @api_router.post("/newsletter", response_model=NewsletterSubscriber, status_code=201)
 async def subscribe_newsletter(payload: NewsletterCreate, request: Request):
     client_ip = request.client.host if request.client else "unknown"
-    _enforce_rate_limit(_newsletter_rate_limit, client_ip, _STRICT_WINDOW_SECONDS, _STRICT_MAX_REQUESTS)
+    cfg = PUBLIC_RATE_LIMITS["newsletter"]
+    allowed, retry_after = await enforce_rate_limit(
+        _newsletter_rate_limit,
+        f"newsletter:ip:{client_ip}",
+        cfg["window_seconds"],
+        cfg["max_requests"],
+        account_key=payload.email.lower(),
+        account_window_seconds=cfg["window_seconds"],
+        account_max_requests=cfg["max_requests"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many subscription attempts from this email. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
     existing = await db.newsletter_subscribers.find_one({"email": payload.email})
     if existing:
         existing.pop("_id", None)
@@ -586,7 +845,21 @@ async def _ensure_insights_seed():
 
 
 @api_router.get("/insights", response_model=List[InsightPost])
-async def list_insights(limit: int = 12):
+async def list_insights(limit: int = 12, request: Request = None):
+    client_ip = request.client.host if request and request.client else "unknown"
+    cfg = PUBLIC_RATE_LIMITS["insights_get"]
+    allowed, retry_after = await enforce_rate_limit(
+        _insights_get_rate_limit,
+        f"insights:get:ip:{client_ip}",
+        cfg["window_seconds"],
+        cfg["max_requests"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
     limit = max(1, min(limit, 100))
     items = await db.insights.find({}, {"_id": 0}).sort("published_at", -1).to_list(limit)
     for item in items:
@@ -596,6 +869,308 @@ async def list_insights(limit: int = 12):
             except ValueError:
                 pass
     return items
+
+
+@api_router.post("/insights", response_model=InsightPost, status_code=201)
+async def create_insight(payload: InsightCreate, request: Request):
+    """Admin endpoint to create insight posts. Rate limited strictly."""
+    admin_token = request.headers.get("X-Admin-Token", "")
+    if not INSIGHTS_ADMIN_TOKEN:
+        logger.error("INSIGHTS_ADMIN_TOKEN is not configured; insight publishing is unavailable")
+        raise HTTPException(status_code=503, detail="Insight publishing is temporarily unavailable.")
+    if not secrets.compare_digest(admin_token, INSIGHTS_ADMIN_TOKEN):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    client_ip = request.client.host if request.client else "unknown"
+    cfg = PUBLIC_RATE_LIMITS["insights_post"]
+    allowed, retry_after = await enforce_rate_limit(
+        _insights_post_rate_limit,
+        f"insights:post:ip:{client_ip}",
+        cfg["window_seconds"],
+        cfg["max_requests"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
+    post = InsightPost(**payload.model_dump())
+    doc = post.model_dump()
+    doc["published_at"] = doc["published_at"].isoformat()
+    try:
+        await db.insights.insert_one(doc)
+    except Exception:
+        logger.exception("Failed to persist insight post")
+        raise HTTPException(status_code=500, detail="Failed to create post.")
+    logger.info("New insight post created: %s", post.title)
+    return post
+
+
+# ---------- Auth Endpoints (Placeholder - Future Implementation) ----------
+# These endpoints demonstrate the strict rate limiting pattern for authentication routes
+# They are not currently wired to any authentication system.
+
+class AuthLogin(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: EmailStr) -> str:
+        email = str(v).strip().lower()
+        if not _EMAIL_PATTERN.fullmatch(email):
+            raise ValueError("invalid email format")
+        return email
+
+
+class AuthRegister(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+    name: str = Field(..., min_length=2, max_length=120)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: EmailStr) -> str:
+        email = str(v).strip().lower()
+        if not _EMAIL_PATTERN.fullmatch(email):
+            raise ValueError("invalid email format")
+        return email
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        return _sanitize_text(v, 120, "name")
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        # Enforce password complexity
+        if len(v) < 8:
+            raise ValueError("password must be at least 8 characters")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("password must contain at least one lowercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("password must contain at least one digit")
+        if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", v):
+            raise ValueError("password must contain at least one special character")
+        return v
+
+
+class AuthForgotPassword(BaseModel):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: EmailStr) -> str:
+        email = str(v).strip().lower()
+        if not _EMAIL_PATTERN.fullmatch(email):
+            raise ValueError("invalid email format")
+        return email
+
+
+class AuthResetPassword(BaseModel):
+    token: str
+    password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("token is required")
+        if len(v) > 256:
+            raise ValueError("invalid token")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("password must be at least 8 characters")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("password must contain at least one lowercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("password must contain at least one digit")
+        if not re.search(r"[!@#$$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", v):
+            raise ValueError("password must contain at least one special character")
+        return v
+
+
+@api_router.post("/auth/login")
+async def auth_login(payload: AuthLogin, request: Request):
+    """Login endpoint with strict per-IP and per-account rate limiting with exponential backoff."""
+    client_ip = request.client.host if request.client else "unknown"
+    email_key = payload.email.lower()
+    allowed, retry_after = await enforce_rate_limit(
+        _contact_rate_limit,  # Reuse store
+        f"auth:login:ip:{client_ip}",
+        AUTH_RATE_LIMIT["ip_window_seconds"],
+        AUTH_RATE_LIMIT["ip_max_requests"],
+        account_key=email_key,
+        account_window_seconds=AUTH_RATE_LIMIT["account_window_seconds"],
+        account_max_requests=AUTH_RATE_LIMIT["account_max_requests"],
+        backoff_base_seconds=AUTH_RATE_LIMIT["backoff_base_seconds"],
+        backoff_max_seconds=AUTH_RATE_LIMIT["backoff_max_seconds"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many login attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
+    # TODO: Implement actual authentication
+    raise HTTPException(status_code=501, detail="Authentication not yet implemented")
+
+
+@api_router.post("/auth/register")
+async def auth_register(payload: AuthRegister, request: Request):
+    """Registration endpoint with strict per-IP and per-account rate limiting with exponential backoff."""
+    client_ip = request.client.host if request.client else "unknown"
+    email_key = payload.email.lower()
+    allowed, retry_after = await enforce_rate_limit(
+        _contact_rate_limit,  # Reuse store
+        f"auth:register:ip:{client_ip}",
+        AUTH_RATE_LIMIT["ip_window_seconds"],
+        AUTH_RATE_LIMIT["ip_max_requests"],
+        account_key=email_key,
+        account_window_seconds=AUTH_RATE_LIMIT["account_window_seconds"],
+        account_max_requests=AUTH_RATE_LIMIT["account_max_requests"],
+        backoff_base_seconds=AUTH_RATE_LIMIT["backoff_base_seconds"],
+        backoff_max_seconds=AUTH_RATE_LIMIT["backoff_max_seconds"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many registration attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
+    # TODO: Implement actual registration
+    raise HTTPException(status_code=501, detail="Authentication not yet implemented")
+
+
+@api_router.post("/auth/forgot-password")
+async def auth_forgot_password(payload: AuthForgotPassword, request: Request):
+    """Password reset request with strict per-IP and per-account rate limiting."""
+    client_ip = request.client.host if request.client else "unknown"
+    email_key = payload.email.lower()
+    allowed, retry_after = await enforce_rate_limit(
+        _contact_rate_limit,  # Reuse store
+        f"auth:forgot:ip:{client_ip}",
+        AUTH_RATE_LIMIT["ip_window_seconds"],
+        AUTH_RATE_LIMIT["ip_max_requests"],
+        account_key=email_key,
+        account_window_seconds=AUTH_RATE_LIMIT["account_window_seconds"],
+        account_max_requests=AUTH_RATE_LIMIT["account_max_requests"],
+        backoff_base_seconds=AUTH_RATE_LIMIT["backoff_base_seconds"],
+        backoff_max_seconds=AUTH_RATE_LIMIT["backoff_max_seconds"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many password reset requests. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
+    # TODO: Implement actual password reset request
+    raise HTTPException(status_code=501, detail="Authentication not yet implemented")
+
+
+@api_router.post("/auth/reset-password")
+async def auth_reset_password(payload: AuthResetPassword, request: Request):
+    """Password reset confirmation with strict rate limiting."""
+    client_ip = request.client.host if request.client else "unknown"
+    allowed, retry_after = await enforce_rate_limit(
+        _contact_rate_limit,  # Reuse store
+        f"auth:reset:ip:{client_ip}",
+        AUTH_RATE_LIMIT["ip_window_seconds"],
+        AUTH_RATE_LIMIT["ip_max_requests"],
+        backoff_base_seconds=AUTH_RATE_LIMIT["backoff_base_seconds"],
+        backoff_max_seconds=AUTH_RATE_LIMIT["backoff_max_seconds"],
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)}
+        )
+    # TODO: Implement actual password reset
+    raise HTTPException(status_code=501, detail="Authentication not yet implemented")
+
+
+# ---------- Global Exception Handlers (Prevent Information Leakage) ----------
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle FastAPI request validation errors - return specific field errors."""
+    logger.warning("Request validation error on %s %s: %s", request.method, request.url.path, exc.errors())
+    errors = []
+    for error in exc.errors():
+        field = " -> ".join(str(loc) for loc in error["loc"][1:])  # Skip 'body'
+        errors.append(f"{field}: {error['msg']}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": errors}
+    )
+
+
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    """Handle Pydantic validation errors - return specific field errors."""
+    logger.warning("Validation error on %s %s: %s", request.method, request.url.path, exc.errors())
+    errors = []
+    for error in exc.errors():
+        field = " -> ".join(str(loc) for loc in error["loc"])
+        errors.append(f"{field}: {error['msg']}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": errors}
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Ensure HTTP exceptions don't leak internal details."""
+    # Log the actual error for debugging
+    if exc.status_code >= 500:
+        logger.exception("Server error on %s %s: %s", request.method, request.url.path, exc.detail)
+    else:
+        logger.warning("Client error on %s %s: %s", request.method, request.url.path, exc.detail)
+    
+    # Return generic message for 5xx errors
+    if exc.status_code >= 500:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": "An internal error occurred. Please try again later."},
+            headers=exc.headers
+        )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=exc.headers
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    """Catch-all handler - never leak stack traces or internal details."""
+    logger.exception("Unhandled exception on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected error occurred. Please try again later."}
+    )
 
 
 # ---------- Lifecycle ----------
@@ -630,6 +1205,22 @@ async def on_startup():
         await _ensure_insights_seed()
     except Exception:
         logger.exception("Insights seed failed (non-fatal)")
+    
+    # Start periodic cleanup for rate limit stores
+    async def cleanup_rate_limits():
+        while True:
+            await asyncio.sleep(300)  # Run every 5 minutes
+            try:
+                await _contact_rate_limit.cleanup()
+                await _roi_rate_limit.cleanup()
+                await _newsletter_rate_limit.cleanup()
+                await _insights_get_rate_limit.cleanup()
+                await _insights_post_rate_limit.cleanup()
+                await _global_rate_limit_store.cleanup()
+            except Exception:
+                logger.exception("Rate limit cleanup failed")
+    
+    asyncio.create_task(cleanup_rate_limits())
 
 
 @app.on_event("shutdown")

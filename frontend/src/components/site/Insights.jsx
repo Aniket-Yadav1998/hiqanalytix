@@ -3,11 +3,27 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Clock, Plus, X } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const INITIAL = 5;
 const STEP = 3;
+const emailPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+
+function validateSubscriberEmail(value) {
+    if (!value) return "Email address is required.";
+    if (value.length > 254) return "Email address must be 254 characters or fewer.";
+    if (!emailPattern.test(value)) return "Enter a valid email address, for example you@company.com.";
+
+    const [localPart, domain] = value.split("@");
+    if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+        return "The part before @ cannot start, end, or contain consecutive dots.";
+    }
+    if (domain.includes("..") || domain.split(".").some((part) => part.length < 2)) {
+        return "Enter a valid domain, for example company.com.";
+    }
+    return null;
+}
 
 const FALLBACK = [
     {
@@ -145,6 +161,7 @@ export default function Insights() {
     const [selectedPost, setSelectedPost] = useState(null);
     const [subscriberEmail, setSubscriberEmail] = useState("");
     const [subscribing, setSubscribing] = useState(false);
+    const [subscribeError, setSubscribeError] = useState(null);
 
     useEffect(() => {
         const onKeyDown = (event) => {
@@ -180,15 +197,24 @@ export default function Insights() {
 
     const subscribe = async (event) => {
         event.preventDefault();
-        if (!subscriberEmail.trim()) return;
+        const email = subscriberEmail.trim();
+        const validationError = validateSubscriberEmail(email);
+        if (validationError) {
+            setSubscribeError(validationError);
+            return;
+        }
+
+        setSubscribeError(null);
         try {
             setSubscribing(true);
-            await axios.post(`${API}/newsletter`, { email: subscriberEmail });
+            await axios.post(`${API}/newsletter`, { email });
             setSubscriberEmail("");
             toast.success("You're subscribed to new notes.");
         } catch (error) {
             const detail = error?.response?.data?.detail;
-            toast.error(typeof detail === "string" ? detail : "Please enter a valid email address.");
+            const msg = Array.isArray(detail) ? detail.join(", ") : (typeof detail === "string" ? detail : "Please enter a valid email address.");
+            setSubscribeError(msg);
+            toast.error(msg);
         } finally {
             setSubscribing(false);
         }
@@ -240,28 +266,39 @@ export default function Insights() {
 
                                 <form
                                     onSubmit={subscribe}
+                                    noValidate
                                     data-testid="insights-subscribe-cta"
-                                    className="mt-5 flex max-w-md gap-2"
+                                    className="mt-5 flex flex-col max-w-md gap-2"
                                 >
                                     <label className="sr-only" htmlFor="insights-subscribe-email">Email address</label>
-                                    <input
-                                        id="insights-subscribe-email"
-                                        type="email"
-                                        required
-                                        value={subscriberEmail}
-                                        onChange={(event) => setSubscriberEmail(event.target.value)}
-                                        placeholder="you@company.com"
-                                        className="min-w-0 flex-1 border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus:border-orange-500 focus:outline-none"
-                                    />
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="sm"
-                                        disabled={subscribing}
-                                        className="w-full sm:w-auto"
-                                    >
-                                        {subscribing ? "Joining…" : "Subscribe"}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <input
+                                            id="insights-subscribe-email"
+                                            type="email"
+                                            value={subscriberEmail}
+                                            onChange={(event) => { setSubscriberEmail(event.target.value); if (subscribeError) setSubscribeError(null); }}
+                                            placeholder="you@company.com"
+                                            autoComplete="email"
+                                            aria-invalid={Boolean(subscribeError)}
+                                            aria-describedby={subscribeError ? "insights-subscribe-error" : undefined}
+                                            className={`min-w-0 flex-1 border bg-white px-3 py-2.5 text-sm text-neutral-900 focus:border-brand focus:outline-none transition-colors ${
+                                                subscribeError ? "border-red-400 focus:border-red-300 focus:ring-1 focus:ring-red-200" : "border-neutral-300"
+                                            }`}
+                                        />
+                                        <InteractiveHoverButton
+                                            type="submit"
+                                            text={subscribing ? "Joining…" : "Subscribe"}
+                                            disabled={subscribing}
+                                            size="sm"
+                                            variant="primary"
+                                            className="w-full sm:w-auto"
+                                        />
+                                    </div>
+                                    {subscribeError && (
+                                        <p id="insights-subscribe-error" role="alert" className="text-xs text-red-500 ml-1" data-testid="insights-subscribe-error">
+                                            {subscribeError}
+                                        </p>
+                                    )}
                                 </form>
 
                                 {/* Live pulse indicator */}
@@ -296,20 +333,14 @@ export default function Insights() {
 
                         {remaining > 0 && (
                             <div className="mt-10 flex justify-center">
-                                <Button
+                                <InteractiveHoverButton
                                     type="button"
-                                    variant="secondary-alt"
-                                    size="lg"
+                                    text={`Load ${Math.min(STEP, remaining)} more ${remaining === 1 ? "note" : "notes"}`}
                                     onClick={() => setVisible((v) => v + STEP)}
                                     data-testid="insights-load-more"
-                                    className="group"
-                                >
-                                    <Plus size={16} weight="bold" className="transition-transform duration-200 group-hover:rotate-90" />
-                                    Load {Math.min(STEP, remaining)} more {remaining === 1 ? "note" : "notes"}
-                                    <span className="ml-1 text-xs opacity-70">
-                                        {shown.length} / {items.length}
-                                    </span>
-                                </Button>
+                                    size="lg"
+                                    variant="secondary"
+                                />
                             </div>
                         )}
                         {items.length > 0 && remaining === 0 && (

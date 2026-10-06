@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, useScroll, useSpring } from "framer-motion";
 import { EnvelopeSimple, ArrowUpRight, CaretDown } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
 const aboutLinks = [
     { href: "#about", label: "About" },
@@ -135,16 +135,15 @@ export default function Navbar() {
                                 <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-brand transition-transform duration-300 group-hover:scale-x-100" />
                             </a>
                         ))}
-                        <Button
-                            asChild
-                            variant="primary-sm"
-                            size="default"
+                        <InteractiveHoverButton
+                            text="Book a demo"
+                            onClick={() => {
+                                document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+                                setOpen(false);
+                            }}
                             data-testid="nav-cta"
-                        >
-                            <a href="#contact" className="group inline-flex items-center gap-1.5 px-4 py-2">
-                                Book a demo <ArrowUpRight size={14} weight="bold" />
-                            </a>
-                        </Button>
+                            size="default"
+                        />
                     </div>
 
                     <button
@@ -202,17 +201,16 @@ export default function Navbar() {
                                 {l.label}
                             </a>
                         ))}
-                        <Button
-                            asChild
-                            variant="primary-sm"
+                        <InteractiveHoverButton
+                            text="Book a demo"
+                            onClick={() => {
+                                document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+                                setOpen(false);
+                            }}
+                            data-testid="nav-mobile-cta"
                             size="xl"
                             className="mt-4 w-full"
-                            data-testid="nav-mobile-cta"
-                        >
-                            <a href="#contact" onClick={() => setOpen(false)} className="w-full">
-                                Book a demo
-                            </a>
-                        </Button>
+                        />
                     </div>
                 </div>
             )}
