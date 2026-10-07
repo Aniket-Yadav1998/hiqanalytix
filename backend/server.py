@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import ConfigurationError, PyMongoError
 import os
 import logging
 import re
@@ -31,9 +32,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # MongoDB
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+mongo_url = os.getenv("MONGO_URL", "").strip()
+db_name = os.getenv("DB_NAME", "").strip()
+if not mongo_url or not db_name:
+    logger.critical(
+        "MongoDB is not configured. Set both MONGO_URL and DB_NAME in the deployment environment."
+    )
+    raise SystemExit(1)
+
+try:
+    client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000)
+    db = client[db_name]
+except (ConfigurationError, ValueError):
+    logger.critical(
+        "MongoDB configuration is invalid. Set MONGO_URL to a valid MongoDB Atlas connection URI "
+        "and DB_NAME to the database name."
+    )
+    raise SystemExit(1)
 
 # Resend (optional — best-effort notifications)
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "").strip()
@@ -1195,12 +1210,21 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=_configured_cors_origins,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "X-Admin-Token"],
 )
 
 
 @app.on_event("startup")
 async def on_startup():
+    try:
+        await client.admin.command("ping")
+    except (PyMongoError, OSError):
+        logger.critical(
+            "MongoDB is unavailable. Verify MONGO_URL, DB_NAME, and MongoDB Atlas network access."
+        )
+        logging.shutdown()
+        os._exit(1)
+
     try:
         await _ensure_insights_seed()
     except Exception:
