@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConfigurationError, PyMongoError
+import asyncpg
 import os
 import logging
 import re
@@ -49,6 +50,10 @@ except (ConfigurationError, ValueError):
         "and DB_NAME to the database name."
     )
     raise SystemExit(1)
+
+# Supabase PostgreSQL stores public lead data. Content records continue to use MongoDB.
+SUPABASE_DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL", "").strip()
+lead_db_pool = None
 
 # Resend (optional — best-effort notifications)
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "").strip()
@@ -631,7 +636,18 @@ async def health():
         "status": "healthy",
         "service": "hiqanalytix-api",
         "email_configured": bool(RESEND_API_KEY and SALES_EMAIL),
+        "lead_database_configured": lead_db_pool is not None,
     }
+
+
+def _require_lead_db():
+    if lead_db_pool is None:
+        logger.error("Lead database is not configured")
+        raise HTTPException(
+            status_code=503,
+            detail="Lead submissions are temporarily unavailable. Please try again later.",
+        )
+    return lead_db_pool
 
 
 @api_router.post("/contact", response_model=Contact, status_code=201)
@@ -669,12 +685,24 @@ async def create_contact(payload: ContactCreate, background_tasks: BackgroundTas
         )
 
     contact = Contact(**payload.model_dump())
-    doc = contact.model_dump()
-    doc["created_at"] = doc["created_at"].isoformat()
     try:
-        await db.contacts.insert_one(doc)
-    except Exception:
-        logger.exception("Failed to persist contact lead")
+        await _require_lead_db().execute(
+            """
+            INSERT INTO contact_leads
+                (id, name, email, phone, telephone, company, message, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            """,
+            uuid.UUID(contact.id),
+            contact.name,
+            contact.email,
+            contact.phone,
+            contact.telephone,
+            contact.company,
+            contact.message,
+            contact.created_at,
+        )
+    except asyncpg.PostgresError:
+        logger.exception("Failed to persist contact lead in Supabase")
         raise HTTPException(status_code=500, detail="Failed to submit message. Please try again later.")
     logger.info("New contact lead saved: %s <%s>", contact.name, contact.email)
     background_tasks.add_task(
@@ -720,12 +748,35 @@ async def create_roi_estimate(payload: RoiCreate, background_tasks: BackgroundTa
         )
     computed = _compute_roi(payload.current_manpower, payload.current_hours_per_week)
     lead = RoiLead(**payload.model_dump(), **computed)
-    doc = lead.model_dump()
-    doc["created_at"] = doc["created_at"].isoformat()
     try:
-        await db.roi_leads.insert_one(doc)
-    except Exception:
-        logger.exception("Failed to persist ROI lead")
+        await _require_lead_db().execute(
+            """
+            INSERT INTO roi_leads (
+                id, name, email, company, industry, current_manpower, current_hours_per_week,
+                current_tools, money_savings_pct, manpower_reduction_pct, time_reduction_pct,
+                projected_manpower, projected_hours_per_week, created_at
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+            )
+            """,
+            uuid.UUID(lead.id),
+            lead.name,
+            lead.email,
+            lead.company,
+            lead.industry,
+            lead.current_manpower,
+            lead.current_hours_per_week,
+            lead.current_tools,
+            lead.money_savings_pct,
+            lead.manpower_reduction_pct,
+            lead.time_reduction_pct,
+            lead.projected_manpower,
+            lead.projected_hours_per_week,
+            lead.created_at,
+        )
+    except asyncpg.PostgresError:
+        logger.exception("Failed to persist ROI lead in Supabase")
         raise HTTPException(status_code=500, detail="Failed to save your estimate. Please try again later.")
     logger.info("New ROI lead saved: %s <%s> industry=%s", lead.name, lead.email, lead.industry)
     background_tasks.add_task(
@@ -754,17 +805,30 @@ async def subscribe_newsletter(payload: NewsletterCreate, request: Request):
             detail="Too many subscription attempts from this email. Please try again later.",
             headers={"Retry-After": str(retry_after)}
         )
-    existing = await db.newsletter_subscribers.find_one({"email": payload.email})
-    if existing:
-        existing.pop("_id", None)
-        return NewsletterSubscriber(**existing)
     subscriber = NewsletterSubscriber(email=payload.email)
-    doc = subscriber.model_dump()
-    doc["created_at"] = doc["created_at"].isoformat()
     try:
-        await db.newsletter_subscribers.insert_one(doc)
-    except Exception:
-        logger.exception("Failed to persist newsletter subscriber")
+        record = await _require_lead_db().fetchrow(
+            """
+            INSERT INTO newsletter_subscribers (id, email, created_at)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (email) DO NOTHING
+            RETURNING id, email, created_at
+            """,
+            uuid.UUID(subscriber.id),
+            subscriber.email,
+            subscriber.created_at,
+        )
+        if record is None:
+            record = await _require_lead_db().fetchrow(
+                "SELECT id, email, created_at FROM newsletter_subscribers WHERE email = $1",
+                subscriber.email,
+            )
+        if record is None:
+            logger.error("Newsletter subscriber was not returned after insert or lookup")
+            raise HTTPException(status_code=500, detail="Failed to subscribe. Please try again later.")
+        subscriber = NewsletterSubscriber(**dict(record), id=str(record["id"]))
+    except asyncpg.PostgresError:
+        logger.exception("Failed to persist newsletter subscriber in Supabase")
         raise HTTPException(status_code=500, detail="Failed to subscribe. Please try again later.")
     logger.info("New newsletter subscriber saved: %s", subscriber.email)
     return subscriber
@@ -1216,6 +1280,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def on_startup():
+    global lead_db_pool
+
     try:
         await client.admin.command("ping")
     except (PyMongoError, OSError):
@@ -1224,6 +1290,23 @@ async def on_startup():
         )
         logging.shutdown()
         os._exit(1)
+
+    if not SUPABASE_DATABASE_URL:
+        logger.warning("SUPABASE_DATABASE_URL is not set — lead submissions will return 503")
+    else:
+        try:
+            lead_db_pool = await asyncpg.create_pool(
+                SUPABASE_DATABASE_URL,
+                min_size=1,
+                max_size=5,
+                command_timeout=10,
+            )
+            async with lead_db_pool.acquire() as connection:
+                await connection.execute("SELECT 1")
+            logger.info("Supabase lead database connected")
+        except (asyncpg.PostgresError, OSError, ValueError):
+            logger.critical("Unable to connect to Supabase lead database")
+            raise
 
     try:
         await _ensure_insights_seed()
@@ -1249,4 +1332,6 @@ async def on_startup():
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    if lead_db_pool is not None:
+        await lead_db_pool.close()
     client.close()
