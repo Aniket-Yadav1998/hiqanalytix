@@ -12,13 +12,18 @@ const certificateUrl = "/startup-india-certificate.pdf";
 
 export default function Certification() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(
+        () => window.matchMedia?.("(pointer: coarse)").matches ?? false
+    );
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 640);
+        const mediaQuery = window.matchMedia?.("(pointer: coarse)");
+        if (!mediaQuery) return undefined;
+
+        const checkMobile = () => setIsMobile(mediaQuery.matches);
         checkMobile();
-        window.addEventListener("resize", checkMobile);
-        return () => window.removeEventListener("resize", checkMobile);
+        mediaQuery.addEventListener("change", checkMobile);
+        return () => mediaQuery.removeEventListener("change", checkMobile);
     }, []);
 
     useEffect(() => {
@@ -86,48 +91,52 @@ export default function Certification() {
                             <div className="absolute -inset-3 border border-brand/20" />
                             <div className="relative border border-white/15 bg-white/[0.07] p-3 shadow-2xl shadow-black/30 backdrop-blur">
                                 {/* Desktop preview: inline PDF works on desktop browsers */}
-                                <div className="relative hidden aspect-[1.414/1] overflow-hidden bg-white sm:block">
-                                    <iframe
-                                        title="Startup India certificate preview"
-                                        src={`${certificateUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                                        className="h-full w-full"
-                                        loading="lazy"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsOpen(true)}
-                                        className="absolute inset-0 flex items-center justify-center bg-neutral-950/0 opacity-0 transition-all duration-300 hover:bg-neutral-950/45 hover:opacity-100 focus:bg-neutral-950/45 focus:opacity-100 focus-visible:opacity-100 active:bg-neutral-950/45 active:opacity-100"
-                                        aria-label="Open Startup India certificate"
-                                    >
-                                        <span className="inline-flex items-center gap-2 bg-white px-5 py-3 text-sm font-semibold text-neutral-950 shadow-xl">
-                                            View full certificate <ArrowUpRight size={16} weight="bold" />
-                                        </span>
-                                    </button>
-                                </div>
+                                {!isMobile && (
+                                    <div className="relative aspect-[1.414/1] overflow-hidden bg-white">
+                                        <iframe
+                                            title="Startup India certificate preview"
+                                            src={`${certificateUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                                            className="h-full w-full"
+                                            loading="lazy"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsOpen(true)}
+                                            className="absolute inset-0 flex items-center justify-center bg-neutral-950/0 opacity-0 transition-all duration-300 hover:bg-neutral-950/45 hover:opacity-100 focus:bg-neutral-950/45 focus:opacity-100 focus-visible:opacity-100 active:bg-neutral-950/45 active:opacity-100"
+                                            aria-label="Open Startup India certificate"
+                                        >
+                                            <span className="inline-flex items-center gap-2 bg-white px-5 py-3 text-sm font-semibold text-neutral-950 shadow-xl">
+                                                View full certificate <ArrowUpRight size={16} weight="bold" />
+                                            </span>
+                                        </button>
+                                    </div>
+                                )}
                                 {/* Mobile fallback: mobile browsers can't render PDFs in iframes,
                                     so show a tap-friendly card that opens the viewer instead */}
-                                <div className="relative flex flex-col items-center gap-4 bg-white px-6 py-10 text-center sm:hidden">
-                                    <div className="flex h-16 w-16 items-center justify-center bg-brand/10 text-brand">
-                                        <FilePdf size={32} weight="duotone" />
+                                {isMobile && (
+                                    <div className="relative flex flex-col items-center gap-4 bg-white px-6 py-10 text-center">
+                                        <div className="flex h-16 w-16 items-center justify-center bg-brand/10 text-brand">
+                                            <FilePdf size={32} weight="duotone" />
+                                        </div>
+                                        <div>
+                                            <p className="text-base font-semibold text-neutral-950">
+                                                Startup India Certificate
+                                            </p>
+                                            <p className="mt-1 text-sm text-neutral-500">
+                                                Official document · PDF
+                                            </p>
+                                        </div>
+                                        <a
+                                            href={certificateUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-2 bg-neutral-950 px-5 py-3 text-sm font-semibold text-white shadow-xl active:bg-neutral-800"
+                                            aria-label="Open Startup India certificate in a new tab"
+                                        >
+                                            Open certificate <ArrowUpRight size={16} weight="bold" />
+                                        </a>
                                     </div>
-                                    <div>
-                                        <p className="text-base font-semibold text-neutral-950">
-                                            Startup India Certificate
-                                        </p>
-                                        <p className="mt-1 text-sm text-neutral-500">
-                                            Official document · PDF
-                                        </p>
-                                    </div>
-                                    <a
-                                        href={certificateUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-2 bg-neutral-950 px-5 py-3 text-sm font-semibold text-white shadow-xl active:bg-neutral-800"
-                                        aria-label="Open Startup India certificate in a new tab"
-                                    >
-                                        Open certificate <ArrowUpRight size={16} weight="bold" />
-                                    </a>
-                                </div>
+                                )}
                                 <div className="flex items-center gap-3 px-2 pb-1 pt-4">
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center bg-brand/15 text-brand">
