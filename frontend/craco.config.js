@@ -89,6 +89,7 @@ webpackConfig.devServer = (devServerConfig) => {
       ...rest.headers,
       "Cross-Origin-Resource-Policy": "same-origin",
     },
+    historyApiFallback: true,
   };
 
   // Add health check endpoints if enabled

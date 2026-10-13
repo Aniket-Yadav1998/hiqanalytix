@@ -12,12 +12,10 @@ const certificateUrl = "/startup-india-certificate.pdf";
 
 export default function Certification() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(
-        () => window.matchMedia?.("(pointer: coarse)").matches ?? false
-    );
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const mediaQuery = window.matchMedia?.("(pointer: coarse)");
+        const mediaQuery = window.matchMedia?.("(max-width: 768px)");
         if (!mediaQuery) return undefined;
 
         const checkMobile = () => setIsMobile(mediaQuery.matches);

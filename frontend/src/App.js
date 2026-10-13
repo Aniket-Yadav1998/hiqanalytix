@@ -15,8 +15,9 @@ import Insights from "@/components/site/Insights";
 import Certification from "@/components/site/Certification";
 import Contact from "@/components/site/Contact";
 import Footer from "@/components/site/Footer";
+import LegalPage from "@/components/site/LegalPage";
 
-function App() {
+function LandingPage() {
     useSmoothScroll();
 
     return (
@@ -50,6 +51,20 @@ function App() {
             />
         </div>
     );
+}
+
+function App() {
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+
+    if (path === "/privacy-policy") {
+        return <LegalPage page="privacy" />;
+    }
+
+    if (path === "/terms-of-use") {
+        return <LegalPage page="terms" />;
+    }
+
+    return <LandingPage />;
 }
 
 export default App;

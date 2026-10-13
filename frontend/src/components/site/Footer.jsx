@@ -108,7 +108,23 @@ export default function Footer() {
 
                 <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-neutral-200 pt-6 text-xs text-neutral-500 md:flex-row md:items-center">
                     <span>© {new Date().getFullYear()} HARVESTIQ LLP. All rights reserved.</span>
-                    <span data-testid="footer-tagline">Built for enterprise. Trusted by design.</span>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <a
+                            href="/privacy-policy"
+                            data-testid="footer-link-privacy-policy"
+                            className="font-medium text-neutral-600 transition-colors hover:text-brand-dark"
+                        >
+                            Privacy Policy
+                        </a>
+                        <a
+                            href="/terms-of-use"
+                            data-testid="footer-link-terms-of-use"
+                            className="font-medium text-neutral-600 transition-colors hover:text-brand-dark"
+                        >
+                            Terms of Use
+                        </a>
+                        <span data-testid="footer-tagline">Built for enterprise. Trusted by design.</span>
+                    </div>
                 </div>
             </div>
         </footer>
