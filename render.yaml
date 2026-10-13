@@ -5,3 +5,6 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: python -m uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SUPABASE_DATABASE_URL
+        sync: false

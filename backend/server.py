@@ -1305,7 +1305,14 @@ async def on_startup():
                 await connection.execute("SELECT 1")
             logger.info("Supabase lead database connected")
         except (asyncpg.PostgresError, OSError, ValueError):
-            logger.critical("Unable to connect to Supabase lead database")
+            if lead_db_pool is not None:
+                await lead_db_pool.close()
+                lead_db_pool = None
+            logger.exception(
+                "Unable to connect to Supabase lead database. Verify that "
+                "SUPABASE_DATABASE_URL is a valid Supabase connection-pooler URI, "
+                "its password is URL-encoded, and the project permits connections."
+            )
             raise
 
     try:

@@ -10,7 +10,9 @@ This backend stores contact enquiries, ROI calculator requests, and insight news
 
 ## 2. Configure Render
 
-1. In Supabase, open **Connect** and copy the PostgreSQL connection string. For Render, use the connection pooler string if direct connections are unavailable.
+1. In Supabase, open **Connect** and copy the PostgreSQL **connection pooler** URI. Render needs the pooler URI because direct Supabase connections can require IPv6, which is unavailable on some Render instances. Use the Transaction pooler unless the Supabase dashboard directs you otherwise.
+   - The URI must begin with `postgresql://` or `postgres://`.
+   - URL-encode reserved characters in the database password (for example, `@` becomes `%40` and `#` becomes `%23`).
 2. In the Render service running `backend/server.py`, add this secret environment variable:
 
    ```text
