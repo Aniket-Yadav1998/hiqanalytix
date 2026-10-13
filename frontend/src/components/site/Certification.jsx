@@ -12,6 +12,14 @@ const certificateUrl = "/startup-india-certificate.pdf";
 
 export default function Certification() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 640);
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
 
     useEffect(() => {
         if (!isOpen) return undefined;
@@ -110,14 +118,15 @@ export default function Certification() {
                                             Official document · PDF
                                         </p>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsOpen(true)}
+                                    <a
+                                        href={certificateUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
                                         className="inline-flex items-center gap-2 bg-neutral-950 px-5 py-3 text-sm font-semibold text-white shadow-xl active:bg-neutral-800"
-                                        aria-label="Open Startup India certificate"
+                                        aria-label="Open Startup India certificate in a new tab"
                                     >
-                                        View full certificate <ArrowUpRight size={16} weight="bold" />
-                                    </button>
+                                        Open certificate <ArrowUpRight size={16} weight="bold" />
+                                    </a>
                                 </div>
                                 <div className="flex items-center gap-3 px-2 pb-1 pt-4">
                                     <div className="flex items-center gap-3">
@@ -173,11 +182,33 @@ export default function Certification() {
                                 </button>
                             </div>
                         </div>
-                        <iframe
-                            title="Startup India certificate"
-                            src={certificateUrl}
-                            className="min-h-0 flex-1 bg-white"
-                        />
+                        {isMobile ? (
+                            <div className="flex-1 flex flex-col items-center justify-center gap-6 bg-white p-8 text-center">
+                                <FilePdf size={48} weight="duotone" className="text-brand" />
+                                <div>
+                                    <p className="text-lg font-semibold text-neutral-950">
+                                        PDF preview not supported on mobile
+                                    </p>
+                                    <p className="mt-1 text-sm text-neutral-500">
+                                        Tap below to open the certificate in a new tab
+                                    </p>
+                                </div>
+                                <a
+                                    href={certificateUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-2 bg-neutral-950 px-5 py-3 text-sm font-semibold text-white shadow-xl active:bg-neutral-800"
+                                >
+                                    Open certificate <ArrowUpRight size={16} weight="bold" />
+                                </a>
+                            </div>
+                        ) : (
+                            <iframe
+                                title="Startup India certificate"
+                                src={certificateUrl}
+                                className="min-h-0 flex-1 bg-white"
+                            />
+                        )}
                     </div>
                 </div>
             )}
