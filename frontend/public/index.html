@@ -7,20 +7,32 @@
         <link rel="canonical" href="https://hiqanalytix.com/" />
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
         <meta name="googlebot" content="index, follow" />
-        <meta name="description" content="HARVESTIQ LLP — enterprise Power Platform, Power BI dashboard and business automation consulting firm. Trusted by Financial, Automotive, Engineering, Energy and Health teams. Your trust is our responsibility." />
-        <meta name="keywords" content="HARVESTIQ LLP, Power Platform consulting firm, Power BI consultancy, Power BI dashboards, business automation consulting, RPA consultancy, Microsoft Fabric partner, data analytics firm, enterprise BI services, Financial analytics, Automotive analytics, Engineering analytics, Energy analytics, Healthcare analytics, Power Automate consulting, Dataverse consulting, Copilot Studio, technology outsourcing firm" />
+        <meta name="description" content="Need Power Apps or Power Automate consulting? HARVESTIQ LLP builds secure Microsoft Power Platform apps and automated workflows, from planning through deployment." />
         <meta name="author" content="HARVESTIQ LLP" />
         <meta name="publisher" content="HARVESTIQ LLP" />
         <meta name="format-detection" content="telephone=no" />
+
+        <!-- Google Search Console verification -->
+        <meta name="google-site-verification" content="%REACT_APP_GOOGLE_SITE_VERIFICATION%" />
+
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=%REACT_APP_GA_ID%"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '%REACT_APP_GA_ID%');
+        </script>
+
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://images.unsplash.com https://hiqanalytix.com; connect-src 'self' https://hiqanalytix-api.onrender.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://images.unsplash.com https://hiqanalytix.com https://www.google-analytics.com; connect-src 'self' https://hiqanalytix-api.onrender.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         />
 
         <!-- Open Graph -->
         <meta property="og:site_name" content="HARVESTIQ LLP" />
-        <meta property="og:title" content="HARVESTIQ LLP — Enterprise Power BI & Automation Consulting Firm" />
-        <meta property="og:description" content="Boutique consultancy delivering Microsoft Power Platform, Power BI dashboards and intelligent automation for Financial, Automotive, Engineering, Energy and Health industries." />
+        <meta property="og:title" content="Power Apps &amp; Power Automate Consulting | HARVESTIQ LLP" />
+        <meta property="og:description" content="Build secure Power Apps and automate business workflows with Microsoft Power Platform consulting from HARVESTIQ LLP." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://hiqanalytix.com/" />
         <meta property="og:image" content="https://hiqanalytix.com/og-cover.png" />
@@ -30,14 +42,25 @@
 
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="HARVESTIQ LLP — Enterprise Power BI & Automation Consulting Firm" />
-        <meta name="twitter:description" content="Power Platform, Power BI dashboards and intelligent automation for regulated industries. Your trust is our responsibility." />
+        <meta name="twitter:title" content="Power Apps &amp; Power Automate Consulting | HARVESTIQ LLP" />
+        <meta name="twitter:description" content="Build secure Power Apps and automate business workflows with Microsoft Power Platform consulting from HARVESTIQ LLP." />
         <meta name="twitter:image" content="https://hiqanalytix.com/og-cover.png" />
 
+        <!-- Geo / Location tags (helps regional search discovery) -->
+        <meta name="geo.region" content="IN" />
+        <meta name="geo.placename" content="India" />
+        <meta name="ICBM" content="20.5937, 78.9629" />
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
+        <link rel="apple-touch-icon" href="/logo.jpeg" />
+
+        <!-- Preload critical assets for performance (Core Web Vitals) -->
+        <link rel="preload" as="image" href="/logo-transparent.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-        <!-- Structured data: Organization + ProfessionalService for search engines -->
+        <!-- Structured data: Organization, ProfessionalService, and WebSite -->
         <script type="application/ld+json">
         {
           "@context": "https://schema.org",
@@ -50,6 +73,8 @@
               "url": "https://hiqanalytix.com/",
               "logo": "https://hiqanalytix.com/logo.jpeg",
               "slogan": "Your trust is our responsibility",
+              "foundingDate": "2023",
+              "legalName": "HARVESTIQ LLP",
               "sameAs": ["https://www.linkedin.com/company/hiqanalytix"],
               "contactPoint": [{
                 "@type": "ContactPoint",
@@ -62,19 +87,25 @@
             {
               "@type": "ProfessionalService",
               "@id": "https://hiqanalytix.com/#service",
-              "name": "HARVESTIQ LLP — Power Platform, Power BI & Automation Consulting",
-              "description": "Boutique enterprise consulting firm specialising in Microsoft Power Platform, Power BI dashboards, and business automation for Financial, Automotive, Engineering, Energy and Health industries.",
+              "name": "Power Apps and Power Automate Consulting — HARVESTIQ LLP",
+              "description": "Microsoft Power Platform consulting for custom Power Apps, Power Automate workflows, Dataverse, and business process automation.",
               "url": "https://hiqanalytix.com/",
               "image": "https://hiqanalytix.com/og-cover.png",
               "priceRange": "$$$",
               "areaServed": "Worldwide",
               "serviceType": [
+                "Power Apps consulting",
+                "Power Automate consulting",
                 "Power Platform consulting",
+                "Canvas app development",
+                "Model-driven app development",
                 "Power BI dashboards",
                 "Business process automation",
                 "RPA consulting",
                 "Microsoft Fabric",
-                "Data analytics consulting"
+                "Data analytics consulting",
+                "Agentic AI consulting",
+                "Copilot Studio development"
               ],
               "provider": { "@id": "https://hiqanalytix.com/#organization" }
             },
@@ -89,33 +120,10 @@
           ]
         }
         </script>
-        <!--
-        manifest.json provides metadata used when your web app is installed on a
-        user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-        -->
-        <!--
-        Notice the use of %PUBLIC_URL% in the tags above.
-        It will be replaced with the URL of the `public` folder during the build.
-        Only files inside the `public` folder can be referenced from the HTML.
-
-        Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-        work correctly both with client-side routing and a non-root public URL.
-        Learn how to configure a non-root public URL by running `npm run build`.
-        -->
-        <title>HARVESTIQ LLP — Power BI & Automation Consulting Firm | Your trust is our responsibility</title>
+        <title>Power Apps &amp; Power Automate Consulting | HARVESTIQ LLP</title>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root"></div>
-        <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
     </body>
 </html>

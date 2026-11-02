@@ -68,11 +68,10 @@ export default function Hero() {
                         data-testid="hero-heading"
                         className="mt-8 font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-neutral-900 md:text-7xl lg:text-[5.25rem]"
                     >
-                        Your trust
+                        Power Apps &amp;
                         <br />
-                        is our{" "}
                         <span className="relative inline-block text-brand">
-                            responsibility.
+                            Power Automate consulting.
                             <motion.span
                                 aria-hidden
                                 className="absolute -bottom-2 left-0 h-1 w-full origin-left bg-brand/80"
@@ -109,8 +108,8 @@ export default function Hero() {
                         data-testid="hero-subheading"
                         className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-800 md:text-lg"
                     >
-                        for Financial, Automotive, Engineering, Energy and Health
-                        decision-makers who need trusted answers in hours, not months.
+                        Microsoft Power Platform consulting for custom business apps and
+                        automated workflows, from solution design through deployment.
                     </p>
 
                     <div className="mt-10 flex flex-wrap items-center gap-4 list-none" style={{ listStyle: 'none' }}>

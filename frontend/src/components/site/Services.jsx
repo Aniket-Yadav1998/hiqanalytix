@@ -6,9 +6,9 @@ const serviceTiles = [
     {
         key: "power-platform",
         icon: Stack,
-        title: "Power Platform",
-        tagline: "Build custom low-code business apps",
-        body: "Model-driven and canvas apps, Dataverse architecture, ALM pipelines and enterprise governance — engineered to scale beyond the departmental prototype.",
+        title: "Power Apps Consulting",
+        tagline: "Build secure, scalable business apps",
+        body: "Power Apps consulting for canvas and model-driven apps, with Dataverse architecture, deployment pipelines, and governance designed to scale beyond a departmental prototype.",
         bullets: ["Canvas & model-driven apps", "Dataverse & Copilot Studio", "ALM & solution governance"],
     },
     {
@@ -40,9 +40,9 @@ const serviceTiles = [
 const serviceFeatured = {
     key: "business-automation",
     icon: Robot,
-    title: "Business Automation",
-    tagline: "Workflow orchestration across the enterprise",
-    body: "Power Automate, workflow orchestration and system integration that reduce repetitive work, improve process visibility and connect the tools your teams rely on.",
+    title: "Power Automate Consulting",
+    tagline: "Automate workflows across your business",
+    body: "Power Automate consulting to design, build, and support cloud and desktop workflows that reduce repetitive work, connect business systems, and improve process visibility.",
     bullets: ["Power Automate workflows", "System integration and APIs", "Process governance and monitoring"],
 };
 
