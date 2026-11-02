@@ -1,0 +1,83 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy website
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check FTP deployment secrets
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST_PROD }}
+          FTP_USER: ${{ secrets.FTP_USER_PROD }}
+          FTP_PASS: ${{ secrets.FTP_PASS_PROD }}
+        run: |
+          test -n "$FTP_HOST" || { echo "Missing FTP_HOST_PROD Actions secret"; exit 1; }
+          test -n "$FTP_USER" || { echo "Missing FTP_USER_PROD Actions secret"; exit 1; }
+          test -n "$FTP_PASS" || { echo "Missing FTP_PASS_PROD Actions secret"; exit 1; }
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build production website
+        working-directory: frontend
+        run: npm run build
+        env:
+          CI: true
+          REACT_APP_BACKEND_URL: ${{ secrets.PRODUCTION_BACKEND_URL }}
+          REACT_APP_GA_ID: ${{ secrets.REACT_APP_GA_ID }}
+
+      - name: Prepare website-only deployment package
+        working-directory: frontend
+        run: node scripts/copy-to-root.js
+        env:
+          DEPLOY_DIR: deploy
+
+      - name: Deploy website files over FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST_PROD }}
+          username: ${{ secrets.FTP_USER_PROD }}
+          password: ${{ secrets.FTP_PASS_PROD }}
+          protocol: ftps
+          port: 21
+          local-dir: frontend/deploy/
+          server-dir: /public_html/
+          dangerous-clean-slate: false
+
+      - name: Verify live pages
+        run: |
+          set -e
+          for path in / /privacy-policy/ /terms-of-use/ /sitemap.xml; do
+            status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" "https://hiqanalytix.com$path")
+            if [ "$status" != "200" ]; then
+              echo "Expected HTTP 200 for $path, received $status"
+              exit 1
+            fi
+          done
+          curl --fail --silent --show-error https://hiqanalytix.com/privacy-policy/ | grep -q 'Privacy Policy | HARVESTIQ LLP'
+          curl --fail --silent --show-error https://hiqanalytix.com/terms-of-use/ | grep -q 'Terms of Use | HARVESTIQ LLP'
+          curl --fail --silent --show-error https://hiqanalytix.com/sitemap.xml | grep -q 'https://hiqanalytix.com/privacy-policy'
