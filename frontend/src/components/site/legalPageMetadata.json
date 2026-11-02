@@ -1,0 +1,12 @@
+{
+  "privacy": {
+    "path": "privacy-policy",
+    "title": "Privacy Policy",
+    "description": "Your information is handled with care, used only for legitimate business purposes, and never sold or shared for third-party marketing."
+  },
+  "terms": {
+    "path": "terms-of-use",
+    "title": "Terms of Use",
+    "description": "These terms explain how you may use our website and the standards that help keep it secure, accurate, and useful for everyone."
+  }
+}

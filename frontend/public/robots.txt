@@ -1,5 +1,11 @@
+# robots.txt for hiqanalytix.com
 User-agent: *
 Allow: /
-Disallow: /api/
 
+# Disallow admin/api paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+
+# Sitemap locations (Google + Bing)
 Sitemap: https://hiqanalytix.com/sitemap.xml

@@ -12,16 +12,20 @@
         <meta name="publisher" content="HARVESTIQ LLP" />
         <meta name="format-detection" content="telephone=no" />
 
-        <!-- Google Search Console verification -->
-        <meta name="google-site-verification" content="%REACT_APP_GOOGLE_SITE_VERIFICATION%" />
-
-        <!-- Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=%REACT_APP_GA_ID%"></script>
+        <!-- Load Analytics only when a measurement ID is configured. -->
         <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '%REACT_APP_GA_ID%');
+            const measurementId = "%REACT_APP_GA_ID%";
+            if (measurementId && !measurementId.includes("%")) {
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){window.dataLayer.push(arguments);}
+                gtag("js", new Date());
+                gtag("config", measurementId);
+
+                const analyticsScript = document.createElement("script");
+                analyticsScript.async = true;
+                analyticsScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+                document.head.appendChild(analyticsScript);
+            }
         </script>
 
         <meta
@@ -52,8 +56,8 @@
         <meta name="ICBM" content="20.5937, 78.9629" />
 
         <!-- Favicon -->
-        <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
-        <link rel="apple-touch-icon" href="/logo.jpeg" />
+        <link rel="icon" type="image/png" href="/logo-transparent.png" />
+        <link rel="apple-touch-icon" href="/logo-transparent.png" />
 
         <!-- Preload critical assets for performance (Core Web Vitals) -->
         <link rel="preload" as="image" href="/logo-transparent.png" />

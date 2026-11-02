@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import Footer from "@/components/site/Footer";
+import legalPageMetadata from "@/components/site/legalPageMetadata.json";
 
 const privacySections = [
     {
@@ -65,23 +66,68 @@ const termsSections = [
 
 const pageContent = {
     privacy: {
-        title: "Privacy Policy",
-        summary: "Your information is handled with care, used only for legitimate business purposes, and never sold or shared for third-party marketing.",
         sections: privacySections,
     },
     terms: {
-        title: "Terms of Use",
-        summary: "These terms explain how you may use our website and the standards that help keep it secure, accurate, and useful for everyone.",
         sections: termsSections,
     },
 };
 
 export default function LegalPage({ page }) {
     const content = pageContent[page];
+    const metadata = legalPageMetadata[page];
+    const canonicalUrl = `https://hiqanalytix.com/${metadata.path}`;
+    const ogTitle = `${metadata.title} | HARVESTIQ LLP`;
+    const ogDescription = metadata.description;
 
     useEffect(() => {
-        document.title = `${content.title} | HARVESTIQ LLP`;
-    }, [content.title]);
+        document.title = ogTitle;
+
+        const updateMetaTag = (name, content, property = false) => {
+            const selector = property ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+            let tag = document.querySelector(selector);
+            if (!tag) {
+                tag = document.createElement("meta");
+                if (property) {
+                    tag.setAttribute("property", name);
+                } else {
+                    tag.setAttribute("name", name);
+                }
+                document.head.appendChild(tag);
+            }
+            tag.setAttribute("content", content);
+        };
+
+        const updateLinkTag = (rel, href) => {
+            let tag = document.querySelector(`link[rel="${rel}"]`);
+            if (!tag) {
+                tag = document.createElement("link");
+                tag.setAttribute("rel", rel);
+                document.head.appendChild(tag);
+            }
+            tag.setAttribute("href", href);
+        };
+
+        updateMetaTag("description", ogDescription);
+        updateMetaTag("robots", "index, follow");
+        updateMetaTag("googlebot", "index, follow");
+        updateLinkTag("canonical", canonicalUrl);
+
+        updateMetaTag("og:title", ogTitle, true);
+        updateMetaTag("og:description", ogDescription, true);
+        updateMetaTag("og:type", "website", true);
+        updateMetaTag("og:url", canonicalUrl, true);
+        updateMetaTag("og:image", "https://hiqanalytix.com/og-cover.png", true);
+        updateMetaTag("og:image:width", "1200", true);
+        updateMetaTag("og:image:height", "630", true);
+        updateMetaTag("og:site_name", "HARVESTIQ LLP", true);
+        updateMetaTag("og:locale", "en_GB", true);
+
+        updateMetaTag("twitter:card", "summary_large_image");
+        updateMetaTag("twitter:title", ogTitle);
+        updateMetaTag("twitter:description", ogDescription);
+        updateMetaTag("twitter:image", "https://hiqanalytix.com/og-cover.png");
+    }, [canonicalUrl, ogTitle, ogDescription]);
 
     return (
         <div className="App" data-testid={`${page}-page`}>
@@ -114,10 +160,10 @@ export default function LegalPage({ page }) {
                             HARVESTIQ LLP
                         </p>
                         <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight text-neutral-900 sm:text-5xl">
-                            {content.title}
+                            {metadata.title}
                         </h1>
                         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-600">
-                            {content.summary}
+                            {metadata.description}
                         </p>
                         <p className="mt-6 text-sm text-neutral-500">Last updated: October 9, 2026</p>
                     </div>
@@ -139,7 +185,7 @@ export default function LegalPage({ page }) {
                                     Contact us
                                 </h2>
                                 <p className="mt-3 text-base leading-relaxed text-neutral-700">
-                                    For questions about {content.title.toLowerCase()} or how we handle your information,
+                                    For questions about {metadata.title.toLowerCase()} or how we handle your information,
                                     email{" "}
                                     <a
                                         href="mailto:connect@hiqanalytix.com"
