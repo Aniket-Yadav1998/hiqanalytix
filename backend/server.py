@@ -1261,13 +1261,16 @@ _default_cors_origins = [
     "https://www.hiqanalytix.com",
 ]
 _configured_cors_origins = [
-    origin.strip()
+    origin.strip().rstrip("/")
     for origin in os.environ.get("CORS_ORIGINS", ",".join(_default_cors_origins)).split(",")
     if origin.strip()
 ]
 if "*" in _configured_cors_origins:
     logger.warning("Ignoring wildcard CORS_ORIGINS because credentialed requests are enabled")
     _configured_cors_origins = _default_cors_origins
+for origin in ("https://hiqanalytix.com", "https://www.hiqanalytix.com"):
+    if origin not in _configured_cors_origins:
+        _configured_cors_origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
